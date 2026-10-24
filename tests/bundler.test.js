@@ -27,3 +27,8 @@ test('downloads omit runtime and guards while preserving user scripts and projec
   const result = bundle({'index.html':'<a href="about.md">About</a><script src="script.js"></script>','script.js':'for(let n=0;n<3;n++) console.log(n);','about.md':'# About'},'index.html',{runtime:false,guard:false});
   assert.doesNotMatch(result.html,/__pagesGuard|function boot/); assert.match(result.html,/href="about.md"/); assert.match(decodeURIComponent(parse(result).querySelector('script[src]').getAttribute('src')),/console.log\(n\)/);
 });
+
+test('nested Markdown pages inherit project style.css, with sibling styles taking priority',()=>{
+  let doc=parse(bundle({'docs/about.md':'# About','style.css':'h1{color:purple}'},'docs/about.md'));assert.match(doc.querySelector('style').textContent,/purple/);
+  doc=parse(bundle({'docs/about.md':'# About','style.css':'h1{color:purple}','docs/style.css':'h1{color:green}'},'docs/about.md'));assert.match(doc.querySelector('style').textContent,/green/);
+});

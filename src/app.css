@@ -9,3 +9,6 @@ dialog{color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:
 /* Give compact labels and links a usable touch area without enlarging their text. */
 .check-label,.console-heading label{min-height:40px}.brand{min-height:44px}
 @media(max-width:760px),(max-height:500px){#app-footer{height:43px}#app-footer>a{display:flex;align-items:center;min-height:40px}#view-strip{min-height:40px!important;height:40px!important}#view-strip a{min-height:40px;display:flex;align-items:center}}
+
+#file-tabs button{flex:0 0 auto}
+@media(max-width:760px),(max-height:500px){#app-footer>span:first-child{display:flex;align-items:center;gap:4px;white-space:nowrap;min-width:0}#app-footer:has(#offline-action:not([hidden]))>a{display:none}}

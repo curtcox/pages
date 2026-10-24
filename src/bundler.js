@@ -13,7 +13,7 @@ function build(project, page = project.entry, { runtime = true, guard = true, to
   project = Project.validate(project);
   const files = Object.fromEntries(project.files.map(f => [f.name,f.text]));
   if (!Object.prototype.hasOwnProperty.call(files,page) || !Project.PAGE.test(page)) throw Error('Preview page not found.');
-  let html = /\.md$/i.test(page) ? Markdown.render(files[page],{name:page,hasStyle:Object.prototype.hasOwnProperty.call(files,Project.resolve(page,'style.css'))}) : files[page];
+  let html = /\.md$/i.test(page) ? Markdown.render(files[page],{name:page,hasStyle:Object.prototype.hasOwnProperty.call(files,Project.resolve(page,'style.css')) || Object.prototype.hasOwnProperty.call(files,'style.css'),stylePath:Object.prototype.hasOwnProperty.call(files,Project.resolve(page,'style.css')) ? 'style.css' : '/style.css'}) : files[page];
   // linkedom's parser needs a document shell for fragment-only pages; browsers add it automatically.
   if (!/<html[\s>]/i.test(html)) html = '<!doctype html><html><head></head><body>' + html + '</body></html>';
   const doc = new Parser().parseFromString(html,'text/html');

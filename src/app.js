@@ -54,6 +54,10 @@ function selectFile(name,line) {
 }
 const sessions = new Map();
 function renderTabs() {
+  const buttons = [...$('file-tabs').children];
+  if (buttons.length === project.files.length && buttons.every((button,index)=>button.textContent === project.files[index].name)) {
+    buttons.forEach(button=>button.setAttribute('aria-selected',String(button.textContent === project.active))); return;
+  }
   $('file-tabs').replaceChildren();
   for (const file of project.files) {
     const button = document.createElement('button'); button.textContent = file.name; button.setAttribute('role','tab'); button.setAttribute('aria-selected',String(file.name === project.active)); button.title = 'Double-click or long-press to rename';

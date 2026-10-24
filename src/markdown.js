@@ -17,7 +17,7 @@ function frontMatter(source) {
   }
   return { source: source.slice(match[0].length), meta };
 }
-function render(source, { name = 'index.md', hasStyle = false } = {}) {
+function render(source, { name = 'index.md', hasStyle = false, stylePath = 'style.css' } = {}) {
   const parsed = frontMatter(source), used = new Map();
   const engine = new lib.Marked({ gfm: true });
   engine.use({ renderer: { heading(token) {
@@ -26,7 +26,7 @@ function render(source, { name = 'index.md', hasStyle = false } = {}) {
     return `<h${token.depth} id="${escape(base + (n ? '-' + n : ''))}">${this.parser.parseInline(token.tokens)}</h${token.depth}>\n`;
   } } });
   const title = parsed.meta.title || parsed.source.match(/^#\s+(.+)$/m)?.[1] || name;
-  const styles = parsed.meta.css || (hasStyle ? ['style.css'] : []);
+  const styles = parsed.meta.css || (hasStyle ? [stylePath] : []);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(title)}</title>${styles.length ? styles.map(path => `<link rel="stylesheet" href="${escape(path)}">`).join('') : `<style>${defaultCSS}</style>`}</head><body>${engine.parse(parsed.source)}</body></html>`;
 }
 const Markdown = { render, frontMatter, escape };
