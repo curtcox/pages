@@ -1,5 +1,7 @@
 # Pages Online — master plan
 
+Implementation completed on 2026-10-24. See [implementation notes and verification](implementation.md).
+
 A static GitHub Pages site where people build small web pages and sites (HTML, CSS, JavaScript and
 Markdown) in the browser and see them live, the way GraphvizOnline,
 [ManimOnline](https://curtcox.github.io/ManimOnline/),
