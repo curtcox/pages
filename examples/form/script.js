@@ -1,0 +1,1 @@
+document.querySelector('form').onsubmit=event=>{event.preventDefault();document.querySelector('#result').textContent='Thanks, '+new FormData(event.target).get('name')+'! You are on the list (this is a demo).';};

@@ -1,0 +1,1 @@
+function tick(){const now=new Date();document.querySelector('time').textContent=new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);document.querySelector('#date').textContent=new Intl.DateTimeFormat(undefined,{dateStyle:'full'}).format(now);}tick();setInterval(tick,1000);

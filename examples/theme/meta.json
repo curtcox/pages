@@ -1,0 +1,8 @@
+{
+  "title": "Daylight / moonlight",
+  "tags": [
+    "CSS"
+  ],
+  "description": "An adaptive color palette using prefers-color-scheme.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme"
+}

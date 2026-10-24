@@ -1,0 +1,9 @@
+{
+  "title": "Lines of possibility",
+  "tags": [
+    "Graphics",
+    "JavaScript"
+  ],
+  "description": "A generative SVG composition using a deterministic spiral.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/SVG"
+}

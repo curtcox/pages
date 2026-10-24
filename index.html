@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#203f3b">
+  <meta name="description" content="A small workspace for the web. Build HTML, CSS, JavaScript and Markdown pages in your browser.">
+  <meta name="hashbin-client-id" content="">
+  <title>Pages Online — a small workspace for the web</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="src/app.css?v=1">
+  <script>if(new URLSearchParams(location.search).has('view'))document.documentElement.dataset.view='true';</script>
+</head>
+<body data-panel="preview">
+  <div id="view-strip">Made with <a href="./">Pages Online</a><span> · user-created page · </span><a id="edit-link" href="./">Edit</a><button id="view-run" hidden>Run page</button></div>
+  <div id="editor-shell">
+    <header class="toolbar">
+      <a class="brand" href="./" aria-label="Pages Online home"><span class="brand-icon" aria-hidden="true">▱</span><span>Pages <strong>Online</strong><small>A small workspace for the web</small></span></a>
+      <div class="toolbar-actions">
+        <label class="auto-label"><input id="auto-refresh" type="checkbox" checked> Auto-refresh</label>
+        <button id="run" class="primary" title="Run (Ctrl+Enter or ⌘+Enter)">▶ <span>Run</span></button>
+        <button id="share" class="desktop-action">Share</button>
+        <button id="qr" class="desktop-action" title="QR code">QR</button>
+        <details id="more"><summary>More <span aria-hidden="true">⌄</span></summary><div class="more-menu">
+          <p class="menu-label">Project</p>
+          <label>New project<select id="new-project"><option value="">Choose a starter…</option><option value="default">HTML + CSS + JS</option><option value="blank">Blank HTML</option><option value="markdown">Markdown page</option><option value="site">Markdown site</option></select></label>
+          <button id="open-files">Open files…</button><label class="check-label"><input id="replace-import" type="checkbox"> Replace project on import</label>
+          <label>Download<select id="download"><option value="">Choose a format…</option><option value="file">Current file</option><option value="html">Page as one .html</option><option value="zip">Project as .zip</option></select></label>
+          <p class="fine">HTML downloads keep links to other pages. Use the ZIP for a whole site.</p>
+          <button id="share-mobile" class="mobile-only">Share link</button><button id="qr-mobile" class="mobile-only">QR code</button>
+          <label class="mobile-only check-label"><input id="auto-mobile" type="checkbox" checked> Auto-refresh</label>
+          <button id="hide-editor">Hide editor</button>
+          <p class="menu-label">HashBin</p>
+          <label for="hashbin-cid">CID or saved link</label><div class="inline-controls"><input id="hashbin-cid" placeholder="Paste a CID"><button id="hashbin-load">Load</button></div>
+          <button id="hashbin-save">Save to HashBin</button><p id="hashbin-status" class="fine" role="status"></p>
+          <p class="menu-label">Explore & learn</p>
+          <div class="docs-links"><a href="gallery.html">Sample gallery ↗</a><a href="./?example=guide&view" target="_blank" rel="noopener">Guide ↗</a><a href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank" rel="noopener">HTML ↗</a><a href="https://developer.mozilla.org/en-US/docs/Web/CSS" target="_blank" rel="noopener">CSS ↗</a><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noopener">JavaScript ↗</a><a href="https://commonmark.org/help/" target="_blank" rel="noopener">Markdown ↗</a><a href="https://github.github.com/gfm/" target="_blank" rel="noopener">GFM ↗</a><a href="https://github.com/curtcox/pages" target="_blank" rel="noopener">Fork on GitHub ↗</a></div>
+        </div></details>
+      </div>
+    </header>
+    <div id="notice" role="status" hidden></div>
+    <nav class="mobile-tabs" aria-label="Workspace panels"><button data-panel="preview" aria-pressed="true">Preview</button><button data-panel="code" aria-pressed="false">Code</button><button data-panel="console" aria-pressed="false">Console <span id="mobile-console-count">0</span></button></nav>
+  </div>
+  <main id="workspace">
+    <section id="code-pane" aria-label="Code editor">
+      <div class="pane-heading"><span>YOUR FILES</span><div><button id="file-menu" title="File actions">File ⋯</button><button id="add-file" aria-label="Add file">+</button></div></div>
+      <div id="file-tabs" role="tablist" aria-label="Project files"></div>
+      <div id="ace-editor" aria-label="Source editor"></div>
+      <footer class="code-status"><span id="file-mode">HTML</span><span id="save-status">Saved in this browser</span></footer>
+    </section>
+    <div id="splitter" role="separator" tabindex="0" aria-label="Resize editor" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="75" aria-valuenow="45"></div>
+    <section id="preview-pane" aria-label="Preview and console">
+      <div class="preview-heading"><div class="page-location"><button id="back" disabled aria-label="Previous preview page">←</button><span id="preview-path">index.html</span></div><div class="preview-actions"><div class="devices" aria-label="Preview width"><button data-width="375" title="Phone: 375px">Phone</button><button data-width="768" title="Tablet: 768px">Tablet</button><button data-width="full" aria-pressed="true">Full</button></div><button id="reload" title="Reload preview" aria-label="Reload preview">↻</button><button id="open-page">Open page ↗</button></div></div>
+      <div id="preview-stage"><iframe id="preview" title="Your page preview" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe></div>
+      <section id="console-pane" aria-label="Console">
+        <header class="console-heading"><button id="toggle-console" aria-expanded="true">Console <span id="console-count">0</span></button><div><label><input id="console-clear-refresh" type="checkbox" checked> Clear on refresh</label><button id="console-clear">Clear</button><button id="console-copy">Copy</button></div></header>
+        <div id="console-list" role="log" aria-label="Console output"></div>
+        <form id="console-form"><span aria-hidden="true">›</span><input id="console-expression" aria-label="Evaluate JavaScript in preview" placeholder="Evaluate an expression in your page…" autocomplete="off" spellcheck="false"><button type="submit">Evaluate</button></form>
+      </section>
+    </section>
+  </main>
+  <footer id="app-footer"><span><i class="status-dot"></i> <span id="offline-status">Setting up offline access…</span> <button id="offline-action" hidden>Retry offline setup</button></span><a href="gallery.html">18 little starting points →</a><span>HTML · CSS · JavaScript · Markdown</span></footer>
+  <input id="file-input" type="file" multiple accept=".html,.htm,.css,.js,.mjs,.md,.json,.svg,.txt,.csv,.xml" hidden>
+  <dialog id="file-dialog"><form method="dialog"><header><h2>File actions</h2><button aria-label="Close">×</button></header><label>File name<input id="file-name" required maxlength="240"></label><p class="fine">Renaming does not update references in other files.</p><div class="dialog-actions"><button id="rename-file" type="button">Rename</button><button id="entry-file" type="button">Use as entry page</button><button id="delete-file" type="button" class="danger">Delete file</button></div></form></dialog>
+  <dialog id="share-dialog"><header><h2>Share your project</h2><button id="share-close" aria-label="Close">×</button></header><label>Open link in<select id="share-mode"><option value="editor">Editor</option><option value="view">Page only</option></select></label><label class="check-label"><input id="share-no-run" type="checkbox"> Don't run on open</label><label>Share link<textarea id="share-url" rows="3" readonly></textarea></label><p id="share-status" class="fine" role="status"></p><div class="dialog-actions"><button id="share-copy" class="primary">Copy</button><button id="share-shorten">Shorten link</button></div><p class="fine">Links contain your project. Save to HashBin for a shorter saved link.</p></dialog>
+  <dialog id="qr-dialog"><header><h2>A page to pass along</h2><button id="qr-close" aria-label="Close">×</button></header><label>QR destination<select id="qr-mode"><option value="editor">Opens the editor</option><option value="view">Opens the page only</option></select></label><div id="qr-code"></div><p id="qr-warning" class="fine" role="status"></p><div class="dialog-actions"><button id="qr-svg">Download SVG</button><button id="qr-png">Download PNG</button></div></dialog>
+  <dialog id="hashbin-dialog"><header><h2>Save to HashBin</h2><button id="hashbin-close" aria-label="Close">×</button></header><p id="hashbin-message" role="status"></p><div class="dialog-actions"><button id="hashbin-confirm" class="primary">Save</button><button id="hashbin-disconnect" hidden>Disconnect</button></div></dialog>
+  <script src="vendor/marked.min.js?v=1"></script><script src="vendor/acorn.min.js?v=1"></script><script src="vendor/lz-string.min.js?v=1"></script>
+  <script src="src/project.js?v=1"></script><script src="src/markdown.js?v=1"></script><script src="src/loop-guard.js?v=1"></script><script src="src/preview-runtime.js?v=1"></script><script src="src/bundler.js?v=1"></script><script src="src/preview.js?v=1"></script><script src="src/console-view.js?v=1"></script><script src="src/render-scheduler.js?v=1"></script><script src="src/hashbin.js?v=1"></script><script src="src/hashbin-panel.js?v=1"></script><script src="src/share-links.js?v=1"></script><script src="src/qr.js?v=1"></script><script src="src/zip.js?v=1"></script><script src="src/export.js?v=1"></script><script src="src/examples.js?v=1"></script><script src="src/app.js?v=1"></script><script src="src/offline.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+let count=0;const output=document.querySelector('output');document.querySelector('#plus').onclick=()=>output.value=++count;document.querySelector('#minus').onclick=()=>output.value=--count;document.querySelector('#reset').onclick=()=>output.value=count=0;

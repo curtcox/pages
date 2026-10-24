@@ -1,0 +1,120 @@
+/* Run BROWSER=chromium|firefox|webkit npm run test:browser. No test services required. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises'), path = require('node:path'), http = require('node:http');
+const { chromium, firefox, webkit } = require('playwright');
+const P = require('../../src/project.js'), D = require('../../src/hashbin.js').HashBinDocuments, {catalog} = require('../../src/examples.js');
+const root = path.resolve(__dirname,'../..'), engine = process.env.BROWSER || 'chromium';
+function cid(text){const size=Buffer.alloc(6);size.writeUIntBE(Buffer.byteLength(text),0,6);return size.toString('base64url')+(Buffer.byteLength(text)<=64?Buffer.from(text):Buffer.alloc(64,1)).toString('base64url')}
+async function startServer(){const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost'),name=decodeURIComponent(url.pathname);const file=path.resolve(root,'.'+(name.endsWith('/')?name+'index.html':name));if(!file.startsWith(root+path.sep))throw Error('path');const body=await fs.readFile(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.webmanifest':'application/manifest+json'})[path.extname(file)]||'text/plain');res.end(body);}catch(_){res.statusCode=404;res.end('Not found');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));return {server,url:'http://127.0.0.1:'+server.address().port+'/'};}
+async function until(work,label,timeout=8000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{if(await work())return;}catch(e){last=e;}await new Promise(r=>setTimeout(r,60));}throw Error(label+(last?' — '+last.message:''));}
+(async()=>{
+ const hosted=await startServer(),base=process.env.BASE_URL||hosted.url;let browser,page,current='startup',passed=0;
+ async function step(name,work){current=name;await work();passed++;console.log('✓ '+engine+' · '+name);}
+ try{
+  browser=await ({chromium,firefox,webkit})[engine].launch();const context=await browser.newContext({viewport:{width:1280,height:850},acceptDownloads:true,serviceWorkers:'block'});page=await context.newPage();page.setDefaultTimeout(8000);
+  const frame=()=>page.frameLocator('#preview'),logs=()=>page.locator('#console-list').textContent();
+  const open=async(query='')=>{await page.goto(base+query);await page.waitForFunction(()=>window.pagesApp&&document.querySelector('#file-tabs button'));};
+  const fixture=async(files)=>{await page.evaluate(files=>pagesApp.setProject({files:Object.entries(files).map(([name,text])=>({name,text}))}),files);};
+  await step('default project renders; CSS and JS edits auto-refresh',async()=>{
+   await open();assert.equal(await frame().locator('h1').textContent(),'Hello, world.');
+   await page.getByRole('tab',{name:'style.css',exact:true}).click();await page.evaluate(()=>pagesApp.editor.setValue('body { background: rgb(12, 34, 56); }',-1));
+   await until(async()=>await frame().locator('body').evaluate(e=>getComputedStyle(e).backgroundColor)==='rgb(12, 34, 56)','CSS refresh');
+   await page.getByRole('tab',{name:'script.js',exact:true}).click();await page.evaluate(()=>pagesApp.editor.setValue("document.querySelector('h1').textContent='Edited JS';",-1));
+   await until(async()=>await frame().locator('h1').textContent()==='Edited JS','JS refresh');
+  });
+  await step('manual Run, keyboard shortcut, file rename and last-page protection',async()=>{
+   await page.locator('#auto-refresh').uncheck();await page.evaluate(()=>pagesApp.editor.setValue("document.querySelector('h1').textContent='Manual run';",-1));
+   await page.waitForTimeout(700);assert.equal(await frame().locator('h1').textContent(),'Edited JS');await page.locator('#run').click();await until(async()=>await frame().locator('h1').textContent()==='Manual run','manual render');
+   await page.evaluate(()=>pagesApp.editor.setValue("document.querySelector('h1').textContent='Shortcut';",-1));await page.keyboard.press(process.platform==='darwin'?'Meta+Enter':'Control+Enter');await until(async()=>await frame().locator('h1').textContent()==='Shortcut','keyboard render');
+   await page.locator('#auto-refresh').check();await page.getByRole('tab',{name:'script.js',exact:true}).dblclick();await page.locator('#file-name').fill('app.js');await page.locator('#rename-file').click();assert.ok((await page.evaluate(()=>pagesApp.getProject())).files.some(f=>f.name==='app.js'));
+   await fixture({'index.md':'# Only page'});await page.locator('#file-menu').click();page.once('dialog',d=>d.accept());await page.locator('#delete-file').click();assert.match(await page.locator('#notice').textContent(),/at least one/);await page.locator('#file-dialog button[aria-label=Close]').click();
+  });
+  await step('Markdown navigation, heading anchors and Back',async()=>{
+   await fixture({'index.md':'# Home\n\n[About](about.md#details)','about.md':'# About\n\n## Details\n\nThe other page.'});await frame().getByRole('link',{name:'About'}).click();await until(async()=>await frame().locator('h1').textContent()==='About','Markdown navigate');assert.equal(await page.locator('#preview-path').textContent(),'about.md');await page.locator('#back').click();await until(async()=>await frame().locator('h1').textContent()==='Home','preview Back');
+  });
+  await step('virtual fetch, XHR, SVG CSS and local module imports',async()=>{
+   await fixture({'index.html':'<link rel="stylesheet" href="style.css"><h1>Data</h1><script src="script.js"></script>','style.css':'body{background-image:url(art.svg)}','art.svg':'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="red"/></svg>','data.json':'{"answer":42}','script.js':"fetch('data.json').then(r=>r.json()).then(x=>console.log('fetch',x.answer));const xhr=new XMLHttpRequest();xhr.open('GET','data.json');xhr.responseType='json';xhr.onload=()=>console.log('xhr',xhr.response.answer);xhr.send();"});
+   await until(async()=>/fetch 42/.test(await logs())&&/xhr 42/.test(await logs()),'virtual data');assert.match(await frame().locator('body').evaluate(e=>getComputedStyle(e).backgroundImage),/data:image/);
+   await open('?example=modules');await until(async()=>/Small pieces/.test(await frame().locator('#message').textContent()),'ES module import');assert.doesNotMatch(await logs(),/error/i);
+  });
+  await step('script order, shared lexical scope, deferred scripts and module cycles',async()=>{
+   await fixture({'index.html':'<script>let shared = 40;</script><script src="deferred.js" defer></script><h1>Order</h1><script>shared += 2;</script>','deferred.js':"document.querySelector('h1').textContent = 'Shared '+shared;"});
+   await until(async()=>await frame().locator('h1').textContent()==='Shared 42','script ordering');
+   await fixture({'index.html':'<h1>Cycles</h1><script type="module" src="main.js"></script>','main.js':"import { ready } from './other.js'; export function greet(){return 'hello';} console.log('cycle '+ready());",'other.js':"import { greet } from './main.js'; export const ready=()=>greet();"});
+   await until(async()=>/cycle hello/.test(await logs()),'module cycle');assert.equal((await logs()).match(/cycle hello/g).length,1);
+  });
+  await step('storage shim and opaque origin isolate the editor and sibling apps',async()=>{
+   await page.evaluate(()=>{localStorage.setItem('pagesonline:test-secret','must stay private');sessionStorage.setItem('pagesonline:test-secret','private session');});
+   await fixture({'index.html':`<h1>Isolated</h1><script>
+    for(const [name,read] of Object.entries({parentDOM:()=>parent.document.body,editorStorage:()=>parent.localStorage.getItem('pagesonline:test-secret'),editorSession:()=>parent.sessionStorage.getItem('pagesonline:test-secret'),topNavigation:()=>top.location.href='https://example.invalid/escaped'})){try{read();console.log(name,'FAIL');}catch(e){console.log(name,'blocked');}}
+    localStorage.setItem('inside','yes');sessionStorage.setItem('inside','session');document.cookie='secret=oops';console.log('shim',localStorage.getItem('inside'),sessionStorage.getItem('inside'),document.cookie,'origin',self.origin);
+    Promise.resolve().then(()=>caches.open('forbidden')).then(()=>console.error('cache FAIL'),()=>console.log('cache blocked'));
+   </script>`});
+   await until(async()=>/cache blocked/.test(await logs()),'storage isolation');const output=await logs();for(const text of ['parentDOM blocked','editorStorage blocked','editorSession blocked','topNavigation blocked','shim yes session  origin null'])assert.ok(output.includes(text),text+': '+output);
+   assert.ok(page.url().startsWith(base));assert.equal(await page.evaluate(()=>localStorage.getItem('pagesonline:test-secret')),'must stay private');assert.equal(await page.locator('#preview').getAttribute('sandbox'),'allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads');
+  });
+  await step('console objects, repeat counts, safe text, file/line jump, eval and spoof rejection',async()=>{
+   await fixture({'index.html':'<h1>Console</h1><script src="script.js"></script>','script.js':"console.log('<img src=x onerror=alert(1)>');\nconsole.warn({answer:42});\nconsole.log('repeat');console.log('repeat');\nthrow Error('broken');"});
+   await until(async()=>/broken/.test(await logs()),'console errors');assert.equal(await page.locator('#console-list img').count(),0);assert.ok(await page.locator('#console-list details').count());assert.match(await logs(),/×2/);
+   await page.locator('.console-location').last().click();assert.equal((await page.evaluate(()=>pagesApp.getProject())).active,'script.js');assert.equal(await page.evaluate(()=>pagesApp.editor.getCursorPosition().row),3);
+   await page.locator('#console-expression').fill('1 + 2');await page.locator('#console-form button').click();await until(async()=>/3/.test(await logs()),'console eval');
+   await page.evaluate(()=>window.postMessage({channel:'pages-online',type:'console',token:pagesApp.preview.token,level:'error',args:['FORGED']},'*'));await page.waitForTimeout(100);assert.doesNotMatch(await logs(),/FORGED/);
+  });
+  await step('infinite loops stop near one second and keep the editor responsive',async()=>{
+   const start=Date.now();await fixture({'index.html':'<h1>Loop test</h1><script src="script.js"></script>','script.js':'\nwhile(true) {}'});await until(async()=>/Loop stopped after 1 s on script.js line 2/.test(await logs()),'loop protection',6000);assert.ok(Date.now()-start<5000);assert.ok(await page.locator('#run').isEnabled());
+  });
+  await step('Share editor/page-only links roundtrip and ?run=0 postpones execution',async()=>{
+   await fixture({'index.md':'# A shareable page','about.md':'# About'});await page.locator('#share').click();const editorLink=await page.locator('#share-url').inputValue();await page.locator('#share-mode').selectOption('view');const viewLink=await page.locator('#share-url').inputValue();await page.locator('#share-no-run').check();const paused=await page.locator('#share-url').inputValue();await page.locator('#share-close').click();
+   const shared=await context.newPage();await shared.goto(editorLink);await shared.waitForFunction(()=>window.pagesApp);assert.equal(await shared.frameLocator('#preview').locator('h1').textContent(),'A shareable page');
+   await shared.goto(viewLink);assert.ok(await shared.locator('#view-strip').isVisible());assert.equal(await shared.locator('.ace_editor').count(),0);assert.equal(await shared.frameLocator('#preview').locator('h1').textContent(),'A shareable page');assert.ok(!(await shared.locator('#edit-link').getAttribute('href')).includes('view'));
+   await shared.goto(paused);await shared.waitForFunction(()=>window.pagesApp);assert.equal(await shared.locator('#preview').getAttribute('srcdoc'),null);await shared.locator('#view-run').click();assert.equal(await shared.frameLocator('#preview').locator('h1').textContent(),'A shareable page');await shared.close();
+  });
+  await step('is.gd shortening and QR SVG/PNG downloads',async()=>{
+   await context.route('https://api.allorigins.win/**',route=>route.fulfill({json:{contents:'https://is.gd/fixture'}}));await page.locator('#share').click();await page.locator('#share-shorten').click();await until(async()=>await page.locator('#share-url').inputValue()==='https://is.gd/fixture','short link');await page.locator('#share-close').click();
+   await page.locator('#qr').click();assert.equal(await page.locator('#qr-code svg').count(),1);assert.match(await page.locator('#qr-warning').textContent(),/this computer/);
+   for(const [button,name] of [['#qr-svg','pages-qr.svg'],['#qr-png','pages-qr.png']]){const [download]=await Promise.all([page.waitForEvent('download'),page.locator(button).click()]);assert.equal(download.suggestedFilename(),name);assert.ok((await fs.stat(await download.path())).size>100);}
+   await page.locator('#qr-close').click();
+  });
+  await step('HTML works standalone, ZIP preserves paths, local import adds files',async()=>{
+   await fixture({'index.html':'<link rel="stylesheet" href="style.css"><h1>Standalone</h1><script src="script.js"></script>','style.css':'h1{color:rgb(10,20,30)}','script.js':"document.querySelector('h1').textContent += ' works';",'nested/data.json':'{"a":1}'});
+   await page.locator('#more summary').click();const [html]=await Promise.all([page.waitForEvent('download'),page.locator('#download').selectOption('html')]);const source=await fs.readFile(await html.path(),'utf8');assert.doesNotMatch(source,/__pagesGuard|function boot/);
+   const standaloneFile=path.join(root,'test-results',engine+'-standalone.html');await fs.copyFile(await html.path(),standaloneFile);const standalone=await context.newPage();await standalone.goto('file://'+standaloneFile);assert.equal(await standalone.locator('h1').textContent(),'Standalone works');assert.equal(await standalone.locator('h1').evaluate(e=>getComputedStyle(e).color),'rgb(10, 20, 30)');await standalone.close();
+   const [zip]=await Promise.all([page.waitForEvent('download'),page.locator('#download').selectOption('zip')]);const archive=await fs.readFile(await zip.path());assert.ok(archive.includes(Buffer.from('nested/data.json')));
+   await page.locator('#file-input').setInputFiles({name:'notes.md',mimeType:'text/markdown',buffer:Buffer.from('# Imported')});await until(async()=>await page.getByRole('tab',{name:'notes.md',exact:true}).count()===1,'local import');
+  });
+  await step('HashBin placeholder, mocked OAuth, quote/save, CID load and stale-load guard',async()=>{
+   await page.locator('#more summary').click();await page.locator('#hashbin-save').click();await until(async()=>/registered client ID/.test(await page.locator('#hashbin-message').textContent()),'client ID notice');await page.locator('#hashbin-close').click();
+   await context.route(base+'**',async route=>{const url=new URL(route.request().url());if(url.pathname===new URL(base).pathname || url.pathname.endsWith('/index.html'))await route.fulfill({body:(await fs.readFile(path.join(root,'index.html'),'utf8')).replace('name=\"hashbin-client-id\" content=\"\"','name=\"hashbin-client-id\" content=\"fixture-client\"'),contentType:'text/html'});else await route.continue();});
+   await context.route('https://hashbin.org/sdk/hashbin.js',route=>route.fulfill({path:path.join(__dirname,'fixtures/hashbin-sdk.mjs'),contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'}}));
+   const payload=D.serialize(P.single('# Saved from HashBin')),saved=cid(payload);
+   await context.route('https://hashbin.org/api/**',route=>{const url=route.request().url();return route.fulfill({json:url.endsWith('/settings')?{default_retention_months:1}:url.endsWith('/balance')?{balance_cents:100}:url.endsWith('/calculate')?{cost_cents:1}:{cid:saved},headers:{'Access-Control-Allow-Origin':'*'}});});
+   await page.evaluate(()=>{pagesApp.store.clientId='fixture-client';});await page.locator('#more').evaluate(e=>e.open=true);await page.locator('#hashbin-save').click();await until(async()=>await page.locator('#hashbin-confirm').textContent()==='Connect to HashBin','OAuth connect');const before=await page.evaluate(()=>pagesApp.getProject());await Promise.all([page.waitForURL('**/*code=fixture*'),page.locator('#hashbin-confirm').click()]);
+   await page.waitForFunction(()=>window.pagesApp);await until(async()=>/Connected to HashBin/.test(await page.locator('#hashbin-status').textContent()),'OAuth return');assert.deepEqual(await page.evaluate(()=>pagesApp.getProject()),before);
+   // The fixture supplies the registered public client ID in the returned HTML.
+   await page.evaluate(()=>{pagesApp.store.clientId='fixture-client';});await page.locator('#more summary').click();await page.locator('#hashbin-save').click();await until(async()=>/Cost:/.test(await page.locator('#hashbin-message').textContent()),'save quote');await page.locator('#hashbin-confirm').click();await until(()=>Promise.resolve(page.url().includes('#'+saved)),'saved CID');await page.locator('#hashbin-close').click();
+   await context.route('https://256t.us/**',async route=>{await new Promise(r=>setTimeout(r,350));await route.fulfill({body:payload,headers:{'Access-Control-Allow-Origin':'*'}});});
+   await page.locator('#more').evaluate(e=>e.open=true);await page.locator('#hashbin-cid').fill(saved);await page.locator('#hashbin-load').click();await page.evaluate(()=>pagesApp.setProject(Project.single('# Newer edit')));await page.waitForTimeout(600);assert.equal((await page.evaluate(()=>pagesApp.getProject())).files[0].text,'# Newer edit');
+   await open('#'+cid('# Tiny CID'));await until(async()=>await frame().locator('h1').textContent()==='Tiny CID','inline CID');
+  });
+  await step('crash-safe startup disables automatic execution',async()=>{
+   await until(async()=>await page.evaluate(()=>localStorage.getItem('pagesonline:rendering')===null),'settled render');await page.evaluate(()=>localStorage.setItem('pagesonline:rendering','1'));await page.reload();await page.waitForFunction(()=>window.pagesApp);assert.ok(!(await page.locator('#auto-refresh').isChecked()));assert.equal(await page.locator('#preview').getAttribute('srcdoc'),null);assert.match(await page.locator('#notice').textContent(),/last preview/);await page.locator('#run').click();assert.equal(await frame().locator('h1').textContent(),'Tiny CID');
+  });
+  await step('all gallery projects open in editor and page-only with no script errors',async()=>{
+   await open();await page.evaluate(()=>localStorage.removeItem('pagesonline:rendering'));
+   for(const sample of catalog){for(const view of [false,true]){await page.goto(base+'?example='+sample.id+(view?'&view':''));await page.waitForFunction(()=>document.querySelector('#preview').srcdoc.length>0);await frame().locator('body').waitFor();await page.waitForTimeout(100);const errors=await page.locator('#console-list .error').allTextContents();assert.deepEqual(errors,[],sample.id+' errors');}}
+   await page.goto(base+'gallery.html');assert.equal(await page.locator('.gallery-card').count(),19);await page.locator('#search').fill('postcards');assert.equal(await page.locator('.gallery-card').count(),1);await page.locator('#search').fill('');await page.getByRole('button',{name:'Markdown',exact:true}).click();assert.equal(await page.locator('.gallery-card').count(),4);
+  });
+  await step('mobile Preview/Code/Console, More, scrolling file tabs and touch targets',async()=>{
+   await page.setViewportSize({width:375,height:812});await open('?example=hello');assert.ok(await page.locator('#preview-stage').isVisible());assert.ok(!(await page.locator('#code-pane').isVisible()));await page.getByRole('button',{name:'Code',exact:true}).click();assert.ok(await page.locator('#code-pane').isVisible());await page.getByRole('button',{name:'Console 0',exact:true}).click();assert.ok(await page.locator('#console-expression').isVisible());await page.getByRole('button',{name:'Preview',exact:true}).click();
+   await page.locator('#more summary').click();assert.ok(await page.locator('#share-mobile').isVisible());await page.locator('#more summary').click();
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const selector of ['#run','#more summary','.mobile-tabs button']){for(const rect of await page.locator(selector).evaluateAll(items=>items.map(e=>e.getBoundingClientRect().height)))assert.ok(rect>=40,selector+': '+rect);}
+   await page.getByRole('button',{name:'Code',exact:true}).click();await page.evaluate(()=>pagesApp.setProject({files:[{name:'index.md',text:'# Many files'},...Array.from({length:10},(_,i)=>({name:'long-file-name-'+i+'.md',text:'# '+i}))]}));assert.ok(await page.locator('#file-tabs').evaluate(e=>e.scrollWidth>e.clientWidth));await page.screenshot({path:path.join(root,'test-results',engine+'-mobile.png')});
+  });
+  await context.close();
+  await step('offline reload without a server connection preserves editing and rendering',async()=>{
+   const offline=await browser.newContext({serviceWorkers:'allow'});const tab=await offline.newPage();await tab.goto(base);await tab.waitForFunction(()=>document.querySelector('#offline-status').textContent==='Available offline',null,{timeout:25000});await offline.setOffline(true);await tab.reload();await tab.waitForFunction(()=>window.pagesApp);assert.equal(await tab.frameLocator('#preview').locator('h1').textContent(),'Hello, world.');await tab.evaluate(()=>pagesApp.setProject(Project.single('# Offline works')));assert.equal(await tab.frameLocator('#preview').locator('h1').textContent(),'Offline works');await tab.goto(base+'gallery.html');assert.equal(await tab.locator('.gallery-card').count(),19);await offline.close();
+  });
+  console.log(`${passed} ${engine} browser checks passed.`);
+ }catch(error){await fs.mkdir(path.join(root,'test-results'),{recursive:true});await page?.screenshot({path:path.join(root,'test-results',engine+'-failure.png'),fullPage:true}).catch(()=>{});console.error('FAIL '+engine+' · '+current+'\n'+error.stack);console.error('Console:',await page?.locator('#console-list').textContent().catch(()=>''));process.exitCode=1;}
+ finally{await browser?.close();await new Promise(r=>hosted.server.close(r));}
+})();

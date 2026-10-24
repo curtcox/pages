@@ -1,0 +1,9 @@
+{
+  "title": "A note for tomorrow",
+  "tags": [
+    "Basics",
+    "JavaScript"
+  ],
+  "description": "Native form validation with an accessible success message.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Form_validation"
+}

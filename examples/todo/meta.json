@@ -1,0 +1,8 @@
+{
+  "title": "A few good intentions",
+  "tags": [
+    "JavaScript"
+  ],
+  "description": "A to-do list using the in-memory preview storage shim.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage"
+}

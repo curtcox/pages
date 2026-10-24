@@ -1,0 +1,8 @@
+{
+  "title": "Postcards from a file",
+  "tags": [
+    "JavaScript"
+  ],
+  "description": "Fetch local JSON from your project with no server.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API"
+}

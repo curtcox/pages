@@ -1,0 +1,9 @@
+{
+  "title": "Leave a little mark",
+  "tags": [
+    "Graphics",
+    "Canvas"
+  ],
+  "description": "Draw with mouse, pen, or touch using pointer events.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events"
+}

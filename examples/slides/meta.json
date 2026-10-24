@@ -1,0 +1,9 @@
+{
+  "title": "A small idea, in three parts",
+  "tags": [
+    "Markdown",
+    "CSS"
+  ],
+  "description": "Markdown sections styled as a scrollable slide deck.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type"
+}

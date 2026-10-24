@@ -1,0 +1,8 @@
+{
+  "title": "Better together",
+  "tags": [
+    "JavaScript"
+  ],
+  "description": "ES modules share a small utility between files.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules"
+}

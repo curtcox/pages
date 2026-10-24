@@ -1,0 +1,8 @@
+{
+  "title": "Here, now",
+  "tags": [
+    "JavaScript"
+  ],
+  "description": "A live clock with Intl.DateTimeFormat.",
+  "mdn": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat"
+}
