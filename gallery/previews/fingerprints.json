@@ -1,7 +1,7 @@
 {
   "clock": {
     "source": "0ee87222b6bcb1533bf6903a185126007aacab1b74f8c138184215e4977e238f",
-    "image": "a39a0fb20d737bc4e81e0fac7d94d3f9c9901b694d12080fbc0c769039c5093f"
+    "image": "67ee7c525caf6f780c00ddbaf3319b280928292807466ddf5f60c105c67f3df2"
   },
   "counter": {
     "source": "1b497476dab5deee078f2370ea08b0be62c76fd3c82a681dff114e5e0c6cdf85",
@@ -24,7 +24,7 @@
     "image": "33ac8fe3b35abd69f832fc1d7bd508f7e2de2aeaf8d4ba3d16ee545df925b724"
   },
   "guide": {
-    "source": "4deacd6bea6f0d5aba63ed33ac38d921abe5a04869b3ca1faa31daefe050c0d9",
+    "source": "dc29c0ee7a08629a68bd6f1b572b35a63aff395b17f9eb5c05ed5165f105c8a0",
     "image": "e0c0cd749018643c71dd500f01e1e41381d1becf7c803b984d9b45a11b17e2d4"
   },
   "hello": {

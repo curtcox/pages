@@ -41,4 +41,4 @@ The service worker installs a content-versioned complete cache before activation
 
 ## HashBin configuration
 
-The `hashbin-client-id` meta value is intentionally blank until the owner supplies a public registered client ID. Redirect URI must be exactly `https://curtcox.github.io/pages/`. Keep the transaction prefix `pagesonline:hashbin:return:`. Sign-in preserves the complete project, quotes precede charges, and stale loads/saves cannot overwrite newer edits. Tests mock the SDK and spend no balance.
+The `hashbin-client-id` meta value contains the registered public Pages Online client ID. This static browser app uses no client secret; never add one to the repository, browser assets, or preview. Redirect URI must be exactly `https://curtcox.github.io/pages/`. Keep the transaction prefix `pagesonline:hashbin:return:`. Sign-in preserves the complete project, quotes precede charges, and stale loads/saves cannot overwrite newer edits. Tests mock the SDK and spend no balance; explicitly clear the test store's client ID when exercising the missing-configuration error.

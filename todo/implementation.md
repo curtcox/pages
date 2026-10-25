@@ -9,7 +9,7 @@ Implemented on 2026-10-24 and published at **https://curtcox.github.io/pages/**.
 - [x] 3. HTML/Markdown bundling, CSS imports, SVG assets, module imports/cycles, virtual fetch/XHR, storage shim, navigation, title reporting and loop guards.
 - [x] 4. Console logs/errors, bounded expandable values, repeated-message counts, file/line navigation, annotations, expression evaluation and clear/copy controls.
 - [x] 5. All planned URL forms, compressed project sharing, shortening, QR SVG/PNG downloads and sandboxed page-only mode.
-- [x] 6. HashBin document shape, CID load, OAuth project restore, quotes, save/disconnect and stale-operation guards; intentionally blank client ID.
+- [x] 6. HashBin document shape, CID load, OAuth project restore, quotes, save/disconnect and stale-operation guards; registered public client ID configured on 2026-10-25.
 - [x] 7. Current-file, self-contained HTML and store-only ZIP exports; local text-file import with add/replace.
 - [x] 8. Phone Preview/Code/Console tabs, More menu, scrolling file tabs, touch targets and desktop device widths.
 - [x] 9. Eighteen original samples plus a Markdown guide, generated catalog, searchable/tag-filtered gallery, real 480×270 PNG covers and documentation links.
@@ -36,8 +36,8 @@ Tests mock HashBin and shortening. They do not spend account funds or prove live
 - Nested Markdown pages inherit the project's root `style.css`, with a sibling stylesheet taking precedence. Explicit front-matter CSS is resolved from the Markdown file.
 - File selection preserves tab DOM nodes, so Firefox double-click rename works reliably; long phone filenames keep their own width and scroll without overlap.
 
-## Remaining owner setup
+## HashBin registration
 
-Register **Pages Online** at https://hashbin.org/developers with return URL **`https://curtcox.github.io/pages/`**. Put the public client ID in the `hashbin-client-id` meta tag, regenerate offline assets, test and deploy. Until then CID loading works and saving displays “HashBin sign-in needs a registered client ID.”
+The owner registered **Pages Online**, and the public client ID was configured on 2026-10-25 with return URL **`https://curtcox.github.io/pages/`**. The static browser app uses no client secret. Browser tests explicitly clear the test store's client ID to retain missing-configuration coverage, and substitute a fixture client ID for mocked OAuth flows.
 
 The v2 items and documented sandbox/storage/loop-protection limits in the master plan remain intentionally out of scope.

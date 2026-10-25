@@ -53,7 +53,7 @@ npm run offline
 
 ## HashBin setup
 
-CID loading works without registration. Saving requires the site owner to register **Pages Online** at [HashBin developers](https://hashbin.org/developers) with the exact return URL **`https://curtcox.github.io/pages/`**, then put the public client ID in the `hashbin-client-id` meta tag in `index.html`. The shipped tag is intentionally empty, and saving explains the missing registration.
+**Pages Online** is registered with HashBin, and its public client ID is configured in the `hashbin-client-id` meta tag in `index.html`. Choose **More → Save to HashBin** to connect your account. The exact return URL is **`https://curtcox.github.io/pages/`**. This static browser app uses no client secret. CID loading works without signing in.
 
 Sign-in preserves the whole project in the current tab. The save dialog shows account retention, cost, and balance before saving. Documents use the sibling apps' `hashbin-diagram` envelope with `type: "pages"`, `src` containing the entry page, and `pages` containing the project. Editing invalidates a saved CID link and restores a complete source link.
 
