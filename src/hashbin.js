@@ -54,8 +54,8 @@ const HashBinDocuments = {
   }
 };
 
-/** Pinned so a later SDK change cannot reach this app; upgrade deliberately. */
-const HASHBIN_SDK_URL = 'https://hashbin.org/sdk/v0.2.0/hashbin.js';
+/** Pinned to the immutable v0.3.0 release so a later SDK change cannot reach this app; upgrade deliberately. */
+const HASHBIN_SDK_URL = 'https://hashbin.org/sdk/v0.3.0/hashbin.js';
 
 /** Saves go through HashBin Publish, so this origin never holds a HashBin credential. */
 class HashBinStore {
@@ -99,32 +99,25 @@ class HashBinStore {
   /** Call synchronously from a click after init(), so the approval popup is allowed. A blocked popup redirects. */
   publish(payload, snapshot) {
     if (!this.client) return Promise.reject(new Error('HashBin is still loading. Try again.'));
-    // A redirect cancelled on HashBin comes back without the SDK's clientState; keep a copy to restore.
-    const pending = `hashbin:pending-publish:${this.clientId}`;
-    if (HashBinDocuments.bytes(payload).length <= 512 * 1024) try { this.transactionStorage?.setItem(pending, JSON.stringify(snapshot)); } catch (_) { /* Popup saves still work. */ }
     return this.client.publish(payload, { contentType: 'application/json', clientState: { snapshot } }).then(async result => {
       if (result.redirected) return result;
-      this.transactionStorage?.removeItem(pending);
       if (!HashBinDocuments.isCID(result.cid)) throw new Error('HashBin returned an invalid CID.');
       await HashBinDocuments.verify(result.cid, HashBinDocuments.bytes(payload));
       return result;
-    }, error => { this.transactionStorage?.removeItem(pending); throw new Error(this.message(error)); });
+    }, error => { throw new Error(this.message(error)); });
   }
   message(error) {
     if (error.message === 'access_denied') return 'The save was cancelled on HashBin.';
     if (error.message === 'Publish window closed.') return 'The HashBin window was closed before the save was approved.';
     return error.message;
   }
-  /** Completes a redirect save; the SDK verifies the CID against the stored bytes. Failures return the pending snapshot. */
+  /** Completes a redirect save; the SDK verifies the CID. Cancelled and failed saves still return the snapshot (SDK v0.3.0). */
   async published(hash) {
     if (!new URLSearchParams(hash.replace(/^#/, '')).has('hashbin_publish')) return null;
-    const key = `hashbin:pending-publish:${this.clientId}`;
-    let pending = null;
-    try { pending = JSON.parse(this.transactionStorage?.getItem(key) || 'null'); this.transactionStorage?.removeItem(key); } catch (_) { /* Nothing to restore. */ }
     try {
       const { cid, clientState } = await (await this.init()).handlePublishCallback({ hash });
       return { cid, snapshot: clientState?.snapshot };
-    } catch (error) { return { error: this.message(error), snapshot: pending }; }
+    } catch (error) { return { error: this.message(error), snapshot: error.clientState?.snapshot || null }; }
   }
   /** Earlier versions kept OAuth tokens on this shared origin. Revoke them server-side; clearing alone leaves copies valid. */
   async retireLegacyTokens() {

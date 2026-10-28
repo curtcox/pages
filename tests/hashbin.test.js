@@ -15,13 +15,13 @@ test('saves through HashBin Publish with the pinned SDK and restores redirect sa
  await assert.rejects(store.publish(payload,snapshot),/still loading/);
  await store.init();assert.equal((await store.publish(payload,snapshot)).cid,savedCid);assert.equal(options.contentType,'application/json');assert.deepEqual(options.clientState,{snapshot});
  assert.equal(await store.published('#doc'),null);assert.deepEqual(await store.published('#hashbin_publish=s&cid=x'),{cid:savedCid,snapshot});assert.equal(loaded,1);
- class Denied{publish(){return Promise.reject(new Error('access_denied'))}async handlePublishCallback(){throw new Error('access_denied')}}
+ class Denied{publish(){return Promise.reject(new Error('access_denied'))}async handlePublishCallback(){throw Object.assign(new Error('access_denied'),{clientState:{snapshot}})}}
  const pending=storage(),denied=new HashBinStore({clientId:'test',transactionStorage:pending,loadSDK:async()=>({HashBinClient:Denied})});await denied.init();
  await assert.rejects(denied.publish(payload,snapshot),/cancelled/);assert.equal(pending.getItem('hashbin:pending-publish:test'),null);
  // A redirect cancelled on HashBin restores the source the SDK no longer returns.
- pending.setItem('hashbin:pending-publish:test',JSON.stringify(snapshot));assert.deepEqual(await denied.published('#hashbin_publish=s&error=access_denied'),{error:'The save was cancelled on HashBin.',snapshot});assert.equal(pending.getItem('hashbin:pending-publish:test'),null);
+ assert.deepEqual(await denied.published('#hashbin_publish=s&error=access_denied'),{error:'The save was cancelled on HashBin.',snapshot});
  await assert.rejects(new HashBinStore().init(),/registered client ID/);
- assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/hashbin.js'),'utf8'),/hashbin\.org\/sdk\/v0\.2\.0\/hashbin\.js/);
+ assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/hashbin.js'),'utf8'),/hashbin\.org\/sdk\/v0\.3\.0\/hashbin\.js/);
 });
 test('revokes tokens left by the earlier OAuth flow, and only then loads the SDK',async()=>{
  const local=storage();let loaded=0,revoked=0;

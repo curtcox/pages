@@ -53,7 +53,7 @@ npm run offline
 
 ## HashBin setup
 
-**Pages Online** is registered with HashBin, and its public client ID is configured in the `hashbin-client-id` meta tag in `index.html`. Choose **More → Save to HashBin**, then **Review on HashBin**: HashBin Publish shows the size, retention, exact price and your balance, and you approve the save on hashbin.org. This app never holds a HashBin credential. If the popup is blocked, projects up to 512 KiB go through a redirect to the exact return URL **`https://curtcox.github.io/pages/`**, and the project is restored on return. The SDK is pinned to `https://hashbin.org/sdk/v0.2.0/hashbin.js`. CID loading works without signing in.
+**Pages Online** is registered with HashBin, and its public client ID is configured in the `hashbin-client-id` meta tag in `index.html`. Choose **More → Save to HashBin**, then **Review on HashBin**: HashBin Publish shows the size, retention, exact price and your balance, and you approve the save on hashbin.org. This app never holds a HashBin credential. If the popup is blocked, projects up to 512 KiB go through a redirect to the exact return URL **`https://curtcox.github.io/pages/`**, and the project is restored on return. The SDK is pinned to `https://hashbin.org/sdk/v0.3.0/hashbin.js`. CID loading works without signing in.
 
 Documents use the sibling apps' `hashbin-diagram` envelope with `type: "pages"`, `src` containing the entry page, and `pages` containing the project. Editing invalidates a saved CID link and restores a complete source link. A link that would replace work kept in this browser asks first.
 
