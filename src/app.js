@@ -176,8 +176,8 @@ if (!view) {
 }
 if (initial.kind === 'publish') {
   const result = await store.published(location.hash);
-  if (result?.snapshot) { setProject(result.snapshot,{cid:result.cid,render:false}); $('hashbin-status').textContent = 'Saved to HashBin.'; restored = true; }
-  else { if (result?.error) notice(result.error); updateURL(); }
+  if (result?.snapshot) { setProject(result.snapshot,{cid:result.cid || null,render:false}); restored = true; } else updateURL();
+  if (result?.error) notice(result.error); else if (result) $('hashbin-status').textContent = 'Saved to HashBin.';
 }
 if (!restored) {
   try {
