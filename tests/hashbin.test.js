@@ -8,20 +8,25 @@ test('HashBin envelope preserves project and entry src; plain text CIDs load',as
   assert.throws(()=>D.parse(JSON.stringify({format:'hashbin-diagram',version:2,type:'pages'})),/version/);
   assert.throws(()=>D.serialize(P.single('x'.repeat(3*1024*1024))),/5 MiB/);
 });
-test('OAuth preserves the complete project, restores once and rejects expired transactions',async()=>{
- const transactionStorage=storage(),snapshot=P.starter();
- class SDK{async authorize(){return {state:'state',url:'https://hashbin.org/authorize'}}async handleCallback(){this.done=true}}
- const store=new HashBinStore({clientId:'test',transactionStorage,loadSDK:async()=>({HashBinClient:SDK})});
- assert.equal(await store.connect(snapshot),'https://hashbin.org/authorize');assert.deepEqual((await store.callback('?code=test&state=state')).snapshot,snapshot);
- assert.match((await store.callback('?code=test&state=state')).error,/could not be restored/);
- transactionStorage.setItem('pagesonline:hashbin:return:old',JSON.stringify({snapshot,createdAt:0}));assert.match((await store.callback('?code=test&state=old')).error,/could not be restored/);
- await assert.rejects(new HashBinStore().connected(),/registered client ID/);
+test('saves through HashBin Publish with the pinned SDK and restores redirect saves',async()=>{
+ const payload=D.serialize(P.starter()),snapshot=P.starter(),savedCid=cid(payload);let options,loaded=0;
+ class SDK{publish(content,opts){options=opts;assert.equal(content,payload);return Promise.resolve({cid:savedCid})}async handlePublishCallback({hash}){assert.match(hash,/hashbin_publish=s/);return {cid:savedCid,clientState:{snapshot}}}}
+ const store=new HashBinStore({clientId:'test',loadSDK:async()=>{loaded++;return {HashBinClient:SDK}}});
+ await assert.rejects(store.publish(payload,snapshot),/still loading/);
+ await store.init();assert.equal((await store.publish(payload,snapshot)).cid,savedCid);assert.equal(options.contentType,'application/json');assert.deepEqual(options.clientState,{snapshot});
+ assert.equal(await store.published('#doc'),null);assert.deepEqual(await store.published('#hashbin_publish=s&cid=x'),{cid:savedCid,snapshot});assert.equal(loaded,1);
+ class Denied{publish(){return Promise.reject(new Error('access_denied'))}async handlePublishCallback(){throw new Error('access_denied')}}
+ const denied=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:Denied})});await denied.init();
+ await assert.rejects(denied.publish(payload,snapshot),/cancelled/);assert.match((await denied.published('#hashbin_publish=s&error=access_denied')).error,/cancelled/);
+ await assert.rejects(new HashBinStore().init(),/registered client ID/);
+ assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/hashbin.js'),'utf8'),/hashbin\.org\/sdk\/v0\.2\.0\/hashbin\.js/);
 });
-test('quotes account retention, refreshes credentials and saves the quoted document',async()=>{
- const payload=D.serialize(P.starter()),savedCid=cid(payload);let refreshed=0;const requests=[];
- class SDK{getTokens(){return {refreshToken:'mock',expiresAt:0}}async refreshAccessToken(){refreshed++}async authorizedFetch(path,options){requests.push([path,options]);return {ok:true,status:200,json:async()=>path.endsWith('/settings')?{default_retention_months:3}:path.endsWith('/balance')?{balance_cents:200}:{cid:savedCid}}}}
- const store=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK}),fetchSource:async(_url,options)=>{assert.equal(JSON.parse(options.body).retention_months,3);return {ok:true,json:async()=>({cost_cents:2})}}});
- assert.deepEqual(await store.quote(payload),{months:3,cost:2,balance:200,size:Buffer.byteLength(payload)});assert.equal((await store.save(payload)).cid,savedCid);assert.ok(refreshed>=3);assert.ok(requests.at(-1)[1].body instanceof FormData);
+test('revokes tokens left by the earlier OAuth flow, and only then loads the SDK',async()=>{
+ const local=storage();let loaded=0,revoked=0;
+ class SDK{async disconnect(){revoked++;local.removeItem('hashbin:tokens:test')}}
+ const store=new HashBinStore({clientId:'test',storage:local,loadSDK:async()=>{loaded++;return {HashBinClient:SDK}}});
+ assert.equal(await store.retireLegacyTokens(),false);assert.equal(loaded,0);
+ local.setItem('hashbin:tokens:test','{"refreshToken":"old"}');assert.equal(await store.retireLegacyTokens(),true);assert.equal(revoked,1);assert.equal(local.getItem('hashbin:tokens:test'),null);
 });
 test('network loads reject oversized CIDs, invalid UTF-8, missing content, and timeouts',async()=>{
  const remote=cid('x'.repeat(200));await assert.rejects(new HashBinStore({fetchSource:async()=>({ok:false,status:404})}).load(remote),/not found/);
@@ -34,6 +39,7 @@ test('network loads and saves verify bytes against the CID',async()=>{
  assert.deepEqual(await served(payload).load(remote),P.single('# Verified remote'));
  await assert.rejects(served(payload.replace('Verified','Replaced')).load(remote),/does not match its CID/);
  await assert.rejects(served(payload+' ').load(remote),/does not match its CID/);
- class SDK{getTokens(){return {refreshToken:'mock',expiresAt:Date.now()+60000}}async authorizedFetch(){return {ok:true,status:200,json:async()=>({cid:cid(payload+' ')})}}}
- await assert.rejects(new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK})}).save(payload),/does not match its CID/);
+ class SDK{async publish(){return {cid:cid(payload+' ')}}}
+ const store=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK})});await store.init();
+ await assert.rejects(store.publish(payload,P.single('# Verified remote')),/does not match its CID/);
 });

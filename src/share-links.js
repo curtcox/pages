@@ -24,6 +24,7 @@ const ShareLinks = {
       return { kind:'source',project:HashBinDocuments.parse(payload),...options };
     }
     const hash = link.hash.slice(1);
+    if (new URLSearchParams(hash).has('hashbin_publish')) return {kind:'publish',...options};
     if (HashBinDocuments.isCID(hash)) return {kind:'cid',cid:hash,...options};
     if (hash) return {kind:'source',project:HashBinDocuments.parse(decodeURIComponent(hash)),...options};
     if (params.has('example')) return {kind:'example',id:params.get('example'),...options};

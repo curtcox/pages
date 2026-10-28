@@ -19,3 +19,4 @@ test('shortening accepts only is.gd HTTPS and returns the complete source link o
   client = new ShareClient({fetchLink:async()=>({ok:true,json:async()=>({contents:'javascript:alert(1)'})})}); const result = await client.shorten(links); assert.equal(result.shortened,false); assert.equal(result.url,links.long);
   client = new ShareClient({timeout:5,fetchLink:()=>new Promise(()=>{})}); assert.equal((await client.shorten(links)).error.code,'timeout');
 });
+test('HashBin Publish returns are not parsed as projects',()=>{assert.deepEqual(S.parse('https://curtcox.github.io/pages/#hashbin_publish=abc&cid=x',LZ.decompressFromEncodedURIComponent),{kind:'publish',run:true,view:false,page:null});});

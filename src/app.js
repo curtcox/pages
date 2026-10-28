@@ -14,11 +14,20 @@ if (crashed) { auto = false; notice('The last preview may have frozen the page. 
 const fingerprint = () => JSON.stringify({files:project.files,entry:project.entry});
 const snapshot = () => Project.validate(project);
 function persist() {
+  if (view) return; // View links display a project; they never replace work kept in this browser.
   try { local?.setItem(key,JSON.stringify(snapshot())); $('save-status').textContent = local ? 'Saved in this browser' : 'Browser storage unavailable'; }
   catch (_) { $('save-status').textContent = 'Browser storage full — download a backup'; }
 }
 function shareLink(options = {}) {
   return ShareLinks.build({url:location.href,project:snapshot(),compress:LZString.compressToEncodedURIComponent,view:options.view ?? view,run:options.run ?? true,page:preview.page || project.entry,cid:savedFingerprint === fingerprint() ? savedCID : null});
+}
+// Links can come from anyone; never let one silently replace work kept in this browser.
+function acceptLink(incoming) {
+  const same = (a,b)=>JSON.stringify([a.files,a.entry]) === JSON.stringify([b.files,b.entry]);
+  // Starters and gallery samples are not unsaved work.
+  const pristine = [...['default','blank','markdown','site'].map(kind=>Project.starter(kind)),...Examples.catalog.map(sample=>sample.project)];
+  if (view || same(project,incoming) || pristine.some(other=>same(project,Project.validate(other)))) return true;
+  return confirm('This link opens a different project. Replace the project saved in this browser?\n\nChoose Cancel to keep your current work.');
 }
 function updateURL() { try { history.replaceState(null,'',shareLink().long); } catch (_) { /* Large links may exceed browser history limits. */ } }
 function setAuto(value) { auto = value; $('auto-refresh').checked = value; $('auto-mobile').checked = value; if (!value) scheduler.cancel(); }
@@ -91,7 +100,8 @@ function setProject(value,{cid = null,render = auto,reset = true,update = true} 
   persist(); if (update) updateURL(); if (render) run();
 }
 const store = new HashBinStore({clientId:document.querySelector('meta[name=hashbin-client-id]').content,redirectUri:new URL('./',location.href).href,storage:local,transactionStorage:session});
-const panel = new HashBinPanel({store,getSnapshot:snapshot,getFingerprint:fingerprint,onLoad:(value,cid)=>{ setProject(value,{cid}); $('more').open = false; },onSaved:(cid,fp,link)=>{savedCID = cid;savedFingerprint = fp;history.replaceState(null,'',link);}});
+let linkLoad = false;
+const panel = new HashBinPanel({store,getSnapshot:snapshot,getFingerprint:fingerprint,onLoad:(value,cid)=>{ if (linkLoad && !acceptLink(value)) { kept = true; return false; } setProject(value,{cid}); $('more').open = false; },onSaved:(cid,fp,link)=>{savedCID = cid;savedFingerprint = fp;history.replaceState(null,'',link);}});
 window.pagesApp = {getProject:snapshot,setProject,preview,store,get editor(){return editor;},run};
 $('run').onclick = run; $('reload').onclick = run; $('view-run').onclick = run;
 $('auto-refresh').onchange = event=>setAuto(event.target.checked); $('auto-mobile').onchange = event=>setAuto(event.target.checked); setAuto(auto);
@@ -149,7 +159,7 @@ splitter.onkeydown = event=>{ if (['ArrowLeft','ArrowRight'].includes(event.key)
 window.addEventListener('resize',()=>editor?.resize());
 window.addEventListener('keydown',event=>{ if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); run(); } });
 window.addEventListener('offline-before-reload',persist);
-window.addEventListener('beforeunload',()=>{persist();if(pendingRender){try{local?.removeItem(renderingKey);}catch(_){}}});
+window.addEventListener('beforeunload',()=>{persist();if(urlTimer){clearTimeout(urlTimer);updateURL();}if(pendingRender){try{local?.removeItem(renderingKey);}catch(_){}}});
 document.addEventListener('click',event=>{ if (!$('more').contains(event.target)) $('more').open = false; });
 function loadScript(src) { return new Promise((resolve,reject)=>{const script = document.createElement('script');script.src = src;script.onload = resolve;script.onerror = reject;document.head.append(script);}); }
 if (!view) {
@@ -159,20 +169,20 @@ if (!view) {
     editor.commands.addCommand({name:'run-page',bindKey:{win:'Ctrl-Enter',mac:'Command-Enter'},exec:run});
   } catch (_) { fallback = document.createElement('textarea'); fallback.className = 'fallback-editor'; fallback.setAttribute('aria-label','Source editor'); fallback.spellcheck = false; fallback.oninput = changed; $('ace-editor').append(fallback); notice('The code editor could not load. You can keep editing in the text field.'); }
 }
-let restored = false;
-try {
-  const callback = await store.callback(location.search);
-  if (callback) {
-    const clean = new URL(location.href); for (const name of ['state','code','error','error_description']) clean.searchParams.delete(name); history.replaceState(null,'',clean.href);
-    if (callback.snapshot) { setProject(callback.snapshot,{render:false}); restored = true; }
-    if (callback.error) notice(callback.error); else $('hashbin-status').textContent = 'Connected to HashBin. Choose Save to HashBin to save.';
-  }
-} catch (error) { notice(error.message); }
+let restored = false, kept = false;
+if (!view) {
+  try { const stored = local?.getItem(key); if (stored) project = Project.validate(JSON.parse(stored)); }
+  catch (_) { notice('The saved project could not be restored. Starting with a fresh page.'); }
+}
+if (initial.kind === 'publish') {
+  const result = await store.published(location.hash);
+  if (result?.snapshot) { setProject(result.snapshot,{cid:result.cid,render:false}); $('hashbin-status').textContent = 'Saved to HashBin.'; restored = true; }
+  else { if (result?.error) notice(result.error); updateURL(); }
+}
 if (!restored) {
   try {
-    if (initial.kind === 'source') project = initial.project;
-    else if (initial.kind === 'example') { const sample = Examples.catalog.find(s=>s.id === initial.id); if (!sample) throw Error('Sample not found. Choose one from the gallery.'); project = Project.validate(sample.project); }
-    else if (initial.kind === 'empty' && !view) { try { const stored = local?.getItem(key); if (stored) project = Project.validate(JSON.parse(stored)); } catch (_) { notice('The saved project could not be restored. Starting with a fresh page.'); } }
+    if (initial.kind === 'source') { if (acceptLink(initial.project)) project = initial.project; else kept = true; }
+    else if (initial.kind === 'example') { const sample = Examples.catalog.find(s=>s.id === initial.id); if (!sample) throw Error('Sample not found. Choose one from the gallery.'); if (acceptLink(Project.validate(sample.project))) project = Project.validate(sample.project); else kept = true; }
     else if (initial.kind === 'invalid') notice('This project link is invalid. Correct the link or open a new project.');
     project = Project.validate(project);
     if (initial.page && project.files.some(f=>f.name === initial.page && Project.PAGE.test(f.name))) preview.page = initial.page;
@@ -182,11 +192,13 @@ if (editor || fallback) selectFile(project.active);
 $('edit-link').href = (()=>{const link = new URL(location.href);link.searchParams.delete('view');return link.href;})();
 if (initial.kind === 'cid' && !restored) {
   // Keep a source revision so a slow CID request cannot replace edits made during loading.
-  await panel.load(initial.cid);
+  linkLoad = true; await panel.load(initial.cid); linkLoad = false;
   if (initial.page && project.files.some(f=>f.name === initial.page && Project.PAGE.test(f.name))) preview.page = initial.page;
   if (auto) run();
 } else if (auto && initial.run !== false) run();
 else $('view-run').hidden = !view;
 persist();
+if (kept) updateURL();
+store.retireLegacyTokens().catch(()=>{ /* Retried on the next load. */ });
 window.addEventListener('hashchange',()=>location.reload());
 })();

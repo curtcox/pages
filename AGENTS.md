@@ -7,7 +7,7 @@ A buildless, static GitHub Pages editor. Read `todo/master_plan.md` for the desi
 - User code runs **only** in the `srcdoc` of `#preview`. Keep the sandbox opaque: never add `allow-same-origin` or `allow-top-navigation`.
 - Never open user HTML through a same-origin blob/data URL in a top-level tab. Open the app's `?view` link. Keep its user-content strip outside the iframe.
 - Parent message handlers must check the iframe's `contentWindow`, the per-render token, type, shape and size. Use `textContent` for user messages, paths, titles and console values.
-- HashBin credentials stay in the editor origin. Never pass them to preview runtime config or log them.
+- The editor holds no HashBin credentials. Never show HashBin prompts or prices inside the preview.
 - The runtime's storage shims are in memory and reset on every render. Do not imply persistence. External resources are not cached for preview frames.
 
 ## Project and bundler
@@ -41,4 +41,4 @@ The service worker installs a content-versioned complete cache before activation
 
 ## HashBin configuration
 
-The `hashbin-client-id` meta value contains the registered public Pages Online client ID. This static browser app uses no client secret; never add one to the repository, browser assets, or preview. Redirect URI must be exactly `https://curtcox.github.io/pages/`. Keep the transaction prefix `pagesonline:hashbin:return:`. Sign-in preserves the complete project, quotes precede charges, and stale loads/saves cannot overwrite newer edits. Tests mock the SDK and spend no balance; explicitly clear the test store's client ID when exercising the missing-configuration error.
+The `hashbin-client-id` meta value contains the registered public Pages Online client ID. This static browser app uses no client secret; never add one to the repository, browser assets, or preview. Redirect URI must be exactly `https://curtcox.github.io/pages/`. Saves use the pinned SDK's `publish()` (HashBin Publish draws price and approval); never reintroduce OAuth tokens on this shared origin. `publish()` must run synchronously in the click, after `init()`. Redirect saves return as `#hashbin_publish=…` with the project in `clientState`. Links never silently replace stored work, and stale loads/saves cannot overwrite newer edits. Tests mock the SDK and spend no balance; explicitly clear the test store's client ID when exercising the missing-configuration error.

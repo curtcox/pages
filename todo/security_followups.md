@@ -13,15 +13,23 @@ own origin.
 - HashBin loads verify bytes against the CID, and saves verify the returned CID (`a98d857`).
   Drop this local copy once the SDK verifies (plan A3).
 
+- Saves use the hosted SDK `publish()` (pinned `v0.2.0`): the user approves each save on
+  hashbin.org and this origin holds no HashBin credential. Tokens left by the earlier OAuth
+  flow are revoked server-side on the next load, then cleared (plan C1/C2).
+- A share link, `#` project, sample or CID link that would replace work kept in this browser
+  asks first; starters and unchanged samples are not treated as work. View links no longer
+  overwrite the stored project (plan C5).
+- The editor-mode preview is labelled as user content; no HashBin prompt or price appears in
+  the app at all (plan C7).
+- `allow-popups-to-escape-sandbox` and `allow-downloads` reviewed and kept: popups and blob
+  documents created by the preview inherit its opaque origin, so escaping removes sandbox
+  flags but grants no access to this origin. Opening a sibling app top-level is equivalent to
+  following a link.
+
 ## Open for Pages Online
 
-- HashBin tokens are still in `localStorage`, readable by every app on the origin. Switch
-  saves to the SDK's hosted `publish()` once it exists (plan A1/C1).
-- A share link or `#` project replaces the saved project without asking (`src/app.js`
-  restores and persists it on load). Confirm before replacing unsaved work (plan C5).
-- Add an editor Content-Security-Policy (plan C6).
-- Label the editor-mode preview as user content; credential and price prompts stay outside
-  it (plan C7).
-- Review whether `allow-popups-to-escape-sandbox` and `allow-downloads` are needed. Escaped
-  popups can open sibling apps on the shared origin as normal top-level pages.
+- Content-Security-Policy (plan C6). `srcdoc` previews inherit the editor document's policy,
+  so any useful `script-src` would also block user scripts (data URLs, inline handlers, CDN
+  scripts, console eval). A meaningful policy needs the preview on its own origin or loaded
+  from a separate URL with its own policy; revisit with the hosting decision.
 - Hosting decision for an origin of its own (plan section B).

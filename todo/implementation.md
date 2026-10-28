@@ -9,7 +9,7 @@ Implemented on 2026-10-24 and published at **https://curtcox.github.io/pages/**.
 - [x] 3. HTML/Markdown bundling, CSS imports, SVG assets, module imports/cycles, virtual fetch/XHR, storage shim, navigation, title reporting and loop guards.
 - [x] 4. Console logs/errors, bounded expandable values, repeated-message counts, file/line navigation, annotations, expression evaluation and clear/copy controls.
 - [x] 5. All planned URL forms, compressed project sharing, shortening, QR SVG/PNG downloads and sandboxed page-only mode.
-- [x] 6. HashBin document shape, CID load, OAuth project restore, quotes, save/disconnect and stale-operation guards; registered public client ID configured on 2026-10-25.
+- [x] 6. HashBin document shape, CID load, hosted `publish()` saves with redirect restore, legacy token revocation and stale-operation guards; registered public client ID configured on 2026-10-25 (OAuth replaced 2026-10-28).
 - [x] 7. Current-file, self-contained HTML and store-only ZIP exports; local text-file import with add/replace.
 - [x] 8. Phone Preview/Code/Console tabs, More menu, scrolling file tabs, touch targets and desktop device widths.
 - [x] 9. Eighteen original samples plus a Markdown guide, generated catalog, searchable/tag-filtered gallery, real 480×270 PNG covers and documentation links.

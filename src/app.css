@@ -12,3 +12,4 @@ dialog{color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:
 
 #file-tabs button{flex:0 0 auto}
 @media(max-width:760px),(max-height:500px){#app-footer>span:first-child{display:flex;align-items:center;gap:4px;white-space:nowrap;min-width:0}#app-footer:has(#offline-action:not([hidden]))>a{display:none}}
+.user-content-label{flex:none;font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
