@@ -4,15 +4,20 @@ const HashBinDocuments = {
   MAX_BYTES: 5 * 1024 * 1024,
   bytes(value) { return new TextEncoder().encode(value); },
   decode64(value) { return Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)); },
+  encode64(bytes) { return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
   cidLength(cid) { return this.decode64(cid.slice(0, 8)).reduce((n, b) => n * 256 + b, 0); },
   isCID(value) {
     if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{8,94}$/.test(value)) return false;
     const length = this.cidLength(value);
     if (value.length !== 8 + (length <= 64 ? Math.ceil(length * 4 / 3) : 86)) return false;
     // Reject noncanonical base64 trailing bits, so ordinary source hashes stay source.
-    const rest = this.decode64(value.slice(8));
-    const encoded = btoa(String.fromCharCode(...rest)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return encoded === value.slice(8);
+    return this.encode64(this.decode64(value.slice(8))) === value.slice(8);
+  },
+  /** A CID is a six-byte length plus the inline bytes (≤64) or their SHA-512, so content servers cannot substitute documents. */
+  async verify(cid, bytes) {
+    if (!this.isCID(cid) || this.cidLength(cid) !== bytes.length) throw new Error('HashBin content does not match its CID.');
+    const content = bytes.length <= 64 ? bytes : new Uint8Array(await crypto.subtle.digest('SHA-512', bytes));
+    if (this.encode64(content) !== cid.slice(8)) throw new Error('HashBin content does not match its CID.');
   },
   cid(input) {
     const text = input.trim().replace(/^#/, '');
@@ -70,7 +75,9 @@ class HashBinStore {
       if (HashBinDocuments.cidLength(cid) <= 64) return HashBinDocuments.parse(new TextDecoder('utf-8', { fatal: true }).decode(HashBinDocuments.decode64(cid.slice(8))));
       const response = await this.fetchSource(`https://256t.us/${cid}`, { signal });
       if (!response.ok) throw new Error(response.status === 404 ? 'Saved source was not found. It may have expired or been deleted.' : `HashBin load failed (HTTP ${response.status}).`);
-      return HashBinDocuments.parse(await response.text());
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      await HashBinDocuments.verify(cid, bytes);
+      return HashBinDocuments.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
     });
   }
   async init() {
@@ -150,6 +157,7 @@ class HashBinStore {
       body.append('content', new Blob([payload], { type: 'application/json' }), 'diagram.json');
       const data = await this.json(await this.authed('/api/content', { method: 'POST', body, signal }));
       if (!HashBinDocuments.isCID(data.cid)) throw new Error('HashBin returned an invalid CID.');
+      await HashBinDocuments.verify(data.cid, HashBinDocuments.bytes(payload));
       return data;
     });
   }
