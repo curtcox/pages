@@ -1,16 +1,14 @@
 /** HashBin controls: snapshot saves approved on hashbin.org, and stale-load guards. */
 class HashBinPanel {
-  constructor({ store, getSnapshot, getFingerprint, onLoad, onSaved }) {
-    Object.assign(this, { store, getSnapshot, getFingerprint, onLoad, onSaved });
+  constructor({ store, getSnapshot, getFingerprint, onLoad, onSaved, getShareOptions, getSavedLink }) {
+    Object.assign(this, { store, getSnapshot, getFingerprint, onLoad, onSaved, getShareOptions, getSavedLink });
     this.revision = 0;
     this.status = document.getElementById('hashbin-status');
-    this.dialog = document.getElementById('hashbin-dialog');
+    this.dialog = document.getElementById('share-dialog');
     this.message = document.getElementById('hashbin-message');
     this.confirm = document.getElementById('hashbin-confirm');
     document.getElementById('hashbin-load').onclick = () => this.load(document.getElementById('hashbin-cid').value);
     document.getElementById('hashbin-cid').onkeydown = event => { if (event.key === 'Enter') this.load(event.target.value); };
-    document.getElementById('hashbin-save').onclick = () => this.openSave();
-    document.getElementById('hashbin-close').onclick = () => this.dialog.close();
     this.dialog.addEventListener('close', () => { this.dialogRevision = (this.dialogRevision || 0) + 1; });
     this.confirm.onclick = () => this.commit();
   }
@@ -34,7 +32,8 @@ class HashBinPanel {
     if (this.saving) return;
     const revision = this.dialogRevision = (this.dialogRevision || 0) + 1;
     this.confirm.disabled = true;
-    this.confirm.textContent = 'Review on HashBin';
+    this.confirm.textContent = 'Save to HashBin';
+    this.savedLink = null;
     this.message.textContent = 'Preparing save…';
     if (!this.dialog.open) this.dialog.showModal();
     try {
@@ -54,21 +53,27 @@ class HashBinPanel {
     this.confirm.disabled = true;
     this.saving = true;
     try {
-      const pending = this.store.publish(this.payload, this.snapshot);
+      const pending = this.store.publish(this.payload, this.snapshot, this.getShareOptions());
       this.message.textContent = 'Waiting for your approval on HashBin…';
       const result = await pending;
       if (result.redirected) return;
       this.saved(result.cid, this.fingerprint);
       this.message.replaceChildren(document.createTextNode('Saved. '));
       const a = document.createElement('a');
-      a.href = HashBinDocuments.link(location.href, result.cid);
-      a.textContent = 'Open saved source';
+      this.savedLink = { element:a, cid:result.cid, snapshot:this.snapshot };
+      this.refreshSavedLink();
       this.message.append(a);
       this.confirm.textContent = 'Saved';
     } catch (error) {
       this.message.textContent = error.message;
       this.confirm.disabled = false;
     } finally { this.saving = false; }
+  }
+  refreshSavedLink() {
+    if (!this.savedLink) return;
+    const { element, cid, snapshot } = this.savedLink;
+    element.href = this.getSavedLink(cid, snapshot);
+    element.textContent = this.getShareOptions().view ? 'Open saved page' : 'Open saved project';
   }
   /** Records a verified save, unless the project changed while HashBin was open. */
   saved(cid, fingerprint) {

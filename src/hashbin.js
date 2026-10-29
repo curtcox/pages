@@ -110,9 +110,9 @@ class HashBinStore {
     return this.initializing;
   }
   /** Call synchronously from a click after init(), so the approval popup is allowed. A blocked popup redirects. */
-  publish(payload, snapshot) {
+  publish(payload, snapshot, share) {
     if (!this.client) return Promise.reject(new Error('HashBin is still loading. Try again.'));
-    return this.client.publish(payload, { contentType: 'application/json', clientState: { snapshot } }).then(async result => {
+    return this.client.publish(payload, { contentType: 'application/json', clientState: { snapshot, ...(share ? { share } : {}) } }).then(async result => {
       if (result.redirected) return result;
       if (!HashBinDocuments.isCID(result.cid)) throw new Error('HashBin returned an invalid CID.');
       await HashBinDocuments.verify(result.cid, HashBinDocuments.bytes(payload));
@@ -131,14 +131,14 @@ class HashBinStore {
       const { cid, clientState } = await (await this.init()).handlePublishCallback({ hash });
       const snapshot = clientState?.snapshot;
       if (snapshot) await HashBinDocuments.verify(cid, HashBinDocuments.bytes(HashBinDocuments.serialize(snapshot)));
-      return { cid, snapshot };
+      return { cid, snapshot, ...(clientState?.share ? { share:clientState.share } : {}) };
     } catch (error) {
       let snapshot = null;
       if (error.clientState?.snapshot) {
         try { snapshot = HashBinDocuments.parse(HashBinDocuments.serialize(error.clientState.snapshot)); }
         catch (_) { return { error: 'The returned project is invalid. Your current project was kept.', snapshot: null }; }
       }
-      return { error: this.message(error), snapshot };
+      return { error: this.message(error), snapshot, ...(error.clientState?.share ? { share:error.clientState.share } : {}) };
     }
   }
   /** Earlier versions kept OAuth tokens on this shared origin. Revoke them server-side; clearing alone leaves copies valid. */

@@ -101,7 +101,7 @@ function setProject(value,{cid = null,render = auto,reset = true,update = true} 
 }
 const store = new HashBinStore({clientId:document.querySelector('meta[name=hashbin-client-id]').content,redirectUri:new URL('./',location.href).href,storage:local,transactionStorage:session});
 let linkLoad = false;
-const panel = new HashBinPanel({store,getSnapshot:snapshot,getFingerprint:fingerprint,onLoad:(value,cid)=>{ if (linkLoad && !acceptLink(value)) { kept = true; return false; } setProject(value,{cid}); $('more').open = false; },onSaved:(cid,fp,link)=>{savedCID = cid;savedFingerprint = fp;history.replaceState(null,'',link);}});
+const panel = new HashBinPanel({store,getSnapshot:snapshot,getFingerprint:fingerprint,onLoad:(value,cid)=>{ if (linkLoad && !acceptLink(value)) { kept = true; return false; } setProject(value,{cid}); $('more').open = false; },onSaved:(cid,fp,link)=>{savedCID = cid;savedFingerprint = fp;history.replaceState(null,'',link);refreshShare();},getShareOptions:shareOptions,getSavedLink:(cid,project)=>ShareLinks.build({url:location.href,project,cid,...shareOptions()}).long});
 window.pagesApp = {getProject:snapshot,setProject,preview,store,get editor(){return editor;},run};
 $('run').onclick = run; $('reload').onclick = run; $('view-run').onclick = run;
 $('auto-refresh').onchange = event=>setAuto(event.target.checked); $('auto-mobile').onchange = event=>setAuto(event.target.checked); setAuto(auto);
@@ -127,8 +127,9 @@ $('open-files').onclick = ()=>$('file-input').click();
 $('file-input').onchange = async event=>{ try { const result = await Export.importFiles(event.target.files,snapshot(),$('replace-import').checked); setProject(result); $('more').open = false; } catch (error) { notice(error.message); } event.target.value = ''; };
 $('download').onchange = event=>{ const kind = event.target.value; event.target.value = ''; try { if (kind === 'file') Export.file(snapshot()); if (kind === 'html') Export.html(snapshot(),preview.page || project.entry); if (kind === 'zip') Export.project(snapshot()); } catch (error) { notice(error.message); } };
 const shareClient = new ShareClient(); let shareRevision = 0;
-function refreshShare() { shareRevision++; shareClient.cancel(); $('share-url').value = shareLink({view:$('share-mode').value === 'view',run:!$('share-no-run').checked}).long; $('share-status').textContent = ''; }
-function openShare() { $('more').open = false; refreshShare(); $('share-dialog').showModal(); }
+function shareOptions() { return {view:$('share-mode').value === 'view',run:!$('share-no-run').checked,page:preview.page || project.entry}; }
+function refreshShare() { shareRevision++; shareClient.cancel(); $('share-url').value = shareLink(shareOptions()).long; $('share-status').textContent = ''; panel.refreshSavedLink(); }
+function openShare() { $('more').open = false; refreshShare(); $('share-dialog').showModal(); panel.openSave(); }
 $('share').onclick = openShare; $('share-mobile').onclick = openShare; $('share-close').onclick = ()=>$('share-dialog').close();
 $('share-mode').onchange = refreshShare; $('share-no-run').onchange = refreshShare;
 $('share-dialog').addEventListener('close',()=>{shareRevision++;shareClient.cancel();});
@@ -169,7 +170,7 @@ if (!view) {
     editor.commands.addCommand({name:'run-page',bindKey:{win:'Ctrl-Enter',mac:'Command-Enter'},exec:run});
   } catch (_) { fallback = document.createElement('textarea'); fallback.className = 'fallback-editor'; fallback.setAttribute('aria-label','Source editor'); fallback.spellcheck = false; fallback.oninput = changed; $('ace-editor').append(fallback); notice('The code editor could not load. You can keep editing in the text field.'); }
 }
-let restored = false, kept = false;
+let restored = false, kept = false, returnedShare = false;
 if (!view) {
   try { const stored = local?.getItem(key); if (stored) project = Project.validate(JSON.parse(stored)); }
   catch (_) { notice('The saved project could not be restored. Starting with a fresh page.'); }
@@ -180,7 +181,15 @@ if (initial.kind === 'publish') {
   if (beforeReturn !== fingerprint()) {
     restored = true; updateURL();
     notice('The HashBin return finished after you edited the project. Your newer edits were kept.');
-  } else if (result?.snapshot) { setProject(result.snapshot,{cid:result.cid || null,render:false}); restored = true; } else updateURL();
+  } else if (result?.snapshot) {
+    setProject(result.snapshot,{cid:result.cid || null,render:false}); restored = true;
+    if (result.share) {
+      $('share-mode').value = result.share.view === true ? 'view' : 'editor';
+      $('share-no-run').checked = result.share.run === false;
+      if (project.files.some(f=>f.name === result.share.page && Project.PAGE.test(f.name))) preview.page = result.share.page;
+      returnedShare = true;
+    }
+  } else updateURL();
   if (result?.error) notice(result.error); else if (result) $('hashbin-status').textContent = 'Saved to HashBin.';
 }
 if (!restored) {
@@ -198,11 +207,12 @@ if (initial.kind === 'cid' && !restored) {
   // Keep a source revision so a slow CID request cannot replace edits made during loading.
   linkLoad = true; await panel.load(initial.cid); linkLoad = false;
   if (initial.page && project.files.some(f=>f.name === initial.page && Project.PAGE.test(f.name))) preview.page = initial.page;
-  if (auto) run();
+  if (auto) run(); else $('view-run').hidden = !view;
 } else if (auto && initial.run !== false) run();
 else $('view-run').hidden = !view;
 persist();
 if (kept) updateURL();
+if (returnedShare) openShare();
 store.retireLegacyTokens().catch(()=>{ /* Retried on the next load. */ });
 window.addEventListener('hashchange',()=>location.reload());
 })();

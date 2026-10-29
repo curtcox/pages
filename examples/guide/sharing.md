@@ -14,7 +14,7 @@ Page-only links keep a small strip identifying the content as a user-created pag
 
 Load a CID without signing in. Saving uses your HashBin account balance and retention settings, with a quote before saving. Sign-in preserves your project in this tab.
 
-Pages Online has a registered public client ID. Choose **More → Save to HashBin** to connect your account; sign-in returns to `https://curtcox.github.io/pages/`. The browser app uses no client secret. The JSON document can be larger than the raw files because it includes the entry source for compatibility; HashBin checks the full document against its 5 MiB limit.
+Pages Online has a registered public client ID. Choose **Share**, select **Editor** or **Page only**, then **Save to HashBin**. HashBin shows the exact price and asks you to approve the save. The saved link appears in the same Share dialog, using your destination and **Don’t run on open** choices. If popups are blocked, the project and sharing choices are restored after returning to `https://curtcox.github.io/pages/`. The browser app uses no client secret. The JSON document can be larger than the raw files because it includes the entry source for compatibility; HashBin checks the full document against its 5 MiB limit.
 
 ## Take your files with you
 

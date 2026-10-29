@@ -54,3 +54,13 @@ test('network loads and saves verify bytes against the CID',async()=>{
  const store=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK})});await store.init();
  await assert.rejects(store.publish(payload,P.single('# Verified remote')),/does not match its CID/);
 });
+
+test('Publish carries sharing choices through approved and cancelled redirects',async()=>{
+ const snapshot=P.single('# Shared'),payload=D.serialize(snapshot),savedCid=cid(payload),share={view:true,run:false,page:'index.md'};let clientState;
+ class SDK{publish(content,options){clientState=options.clientState;return Promise.resolve({redirected:true})}async handlePublishCallback(){return {cid:savedCid,clientState}}}
+ const store=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK})});await store.init();
+ assert.deepEqual(await store.publish(payload,snapshot,share),{redirected:true});assert.deepEqual(clientState,{snapshot,share});
+ assert.deepEqual(await store.published('#hashbin_publish=s'),{cid:savedCid,snapshot,share});
+ store.client.handlePublishCallback=async()=>{throw Object.assign(new Error('access_denied'),{clientState})};
+ assert.deepEqual(await store.published('#hashbin_publish=s'),{error:'The save was cancelled on HashBin.',snapshot,share});
+});
