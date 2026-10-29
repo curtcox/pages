@@ -54,13 +54,26 @@ const HashBinDocuments = {
   }
 };
 
-/** Pinned to the immutable v0.3.0 release so a later SDK change cannot reach this app; upgrade deliberately. */
-const HASHBIN_SDK_URL = 'https://hashbin.org/sdk/v0.3.0/hashbin.js';
+/** Immutable release and SRI from https://hashbin.org/sdk/v0.4.0/integrity.json. Upgrade both deliberately. */
+const HASHBIN_SDK_URL = 'https://hashbin.org/sdk/v0.4.0/hashbin.js';
+const HASHBIN_SDK_INTEGRITY = 'sha384-zzmaXw5svWRp0YF//G5ytyeqEowixccM/hHVDth46FnGrIlPS7fPki5vbhv+bWCr';
+function loadHashBinSDK() {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = HASHBIN_SDK_URL;
+    script.integrity = HASHBIN_SDK_INTEGRITY;
+    script.crossOrigin = 'anonymous';
+    script.onload = () => { script.remove(); resolve(globalThis.hashbin); };
+    script.onerror = () => { script.remove(); reject(new Error('The verified HashBin SDK could not load. Check your connection and try again.')); };
+    document.head.append(script);
+  });
+}
 
 /** Saves go through HashBin Publish, so this origin never holds a HashBin credential. */
 class HashBinStore {
   constructor({ clientId, redirectUri, storage, transactionStorage, fetchSource = (...args) => fetch(...args),
-    loadSDK = () => import(HASHBIN_SDK_URL), timeout = 20000, timers = globalThis } = {}) {
+    loadSDK = loadHashBinSDK, timeout = 20000, timers = globalThis } = {}) {
     Object.assign(this, { clientId, redirectUri, storage, transactionStorage, fetchSource, loadSDK, timeout, timers });
   }
   async bounded(work) {
@@ -111,13 +124,22 @@ class HashBinStore {
     if (error.message === 'Publish window closed.') return 'The HashBin window was closed before the save was approved.';
     return error.message;
   }
-  /** Completes a redirect save; the SDK verifies the CID. Cancelled and failed saves still return the snapshot (SDK v0.3.0). */
+  /** Completes a redirect save; verify the restored snapshot as well as the SDK's saved transaction bytes. */
   async published(hash) {
     if (!new URLSearchParams(hash.replace(/^#/, '')).has('hashbin_publish')) return null;
     try {
       const { cid, clientState } = await (await this.init()).handlePublishCallback({ hash });
-      return { cid, snapshot: clientState?.snapshot };
-    } catch (error) { return { error: this.message(error), snapshot: error.clientState?.snapshot || null }; }
+      const snapshot = clientState?.snapshot;
+      if (snapshot) await HashBinDocuments.verify(cid, HashBinDocuments.bytes(HashBinDocuments.serialize(snapshot)));
+      return { cid, snapshot };
+    } catch (error) {
+      let snapshot = null;
+      if (error.clientState?.snapshot) {
+        try { snapshot = HashBinDocuments.parse(HashBinDocuments.serialize(error.clientState.snapshot)); }
+        catch (_) { return { error: 'The returned project is invalid. Your current project was kept.', snapshot: null }; }
+      }
+      return { error: this.message(error), snapshot };
+    }
   }
   /** Earlier versions kept OAuth tokens on this shared origin. Revoke them server-side; clearing alone leaves copies valid. */
   async retireLegacyTokens() {

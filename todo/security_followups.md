@@ -13,7 +13,7 @@ own origin.
 - HashBin loads verify bytes against the CID, and saves verify the returned CID (`a98d857`).
   Drop this local copy once the SDK verifies (plan A3).
 
-- Saves use the hosted SDK `publish()` (pinned `v0.2.0`): the user approves each save on
+- Saves use the hosted SDK `publish()` (pinned `v0.4.0` with the release's published SRI): the user approves each save on
   hashbin.org and this origin holds no HashBin credential. Tokens left by the earlier OAuth
   flow are revoked server-side on the next load, then cleared (plan C1/C2).
 - A share link, `#` project, sample or CID link that would replace work kept in this browser
@@ -21,6 +21,10 @@ own origin.
   overwrite the stored project (plan C5).
 - The editor-mode preview is labelled as user content; no HashBin prompt or price appears in
   the app at all (plan C7).
+- The editor's inline startup script moved to `src/view-mode.js`. Browser tests reject a
+  substituted SDK, exercise popup/redirect saves and ensure edits made during approval survive.
+- Redirect returns verify that the restored project matches the saved CID. Invalid return
+  state and callbacks that finish after newer edits cannot replace the current project.
 - `allow-popups-to-escape-sandbox` and `allow-downloads` reviewed and kept: popups and blob
   documents created by the preview inherit its opaque origin, so escaping removes sandbox
   flags but grants no access to this origin. Opening a sibling app top-level is equivalent to
@@ -32,4 +36,6 @@ own origin.
   so any useful `script-src` would also block user scripts (data URLs, inline handlers, CDN
   scripts, console eval). A meaningful policy needs the preview on its own origin or loaded
   from a separate URL with its own policy; revisit with the hosting decision.
+  [SN-2026-004](https://hashbin.org/docs/security/sn-2026-004) documents this specifically for
+  Pages Online. On 2026-10-29 the owner chose to preserve `srcdoc` and document this limitation.
 - Hosting decision for an origin of its own (plan section B).

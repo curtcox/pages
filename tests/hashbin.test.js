@@ -21,7 +21,7 @@ test('saves through HashBin Publish with the pinned SDK and restores redirect sa
  // A redirect cancelled on HashBin restores the source the SDK no longer returns.
  assert.deepEqual(await denied.published('#hashbin_publish=s&error=access_denied'),{error:'The save was cancelled on HashBin.',snapshot});
  await assert.rejects(new HashBinStore().init(),/registered client ID/);
- assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/hashbin.js'),'utf8'),/hashbin\.org\/sdk\/v0\.3\.0\/hashbin\.js/);
+ assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/hashbin.js'),'utf8'),/hashbin\.org\/sdk\/v0\.4\.0\/hashbin\.js/);
 });
 test('revokes tokens left by the earlier OAuth flow, and only then loads the SDK',async()=>{
  const local=storage();let loaded=0,revoked=0;
@@ -29,6 +29,15 @@ test('revokes tokens left by the earlier OAuth flow, and only then loads the SDK
  const store=new HashBinStore({clientId:'test',storage:local,loadSDK:async()=>{loaded++;return {HashBinClient:SDK}}});
  assert.equal(await store.retireLegacyTokens(),false);assert.equal(loaded,0);
  local.setItem('hashbin:tokens:test','{"refreshToken":"old"}');assert.equal(await store.retireLegacyTokens(),true);assert.equal(revoked,1);assert.equal(local.getItem('hashbin:tokens:test'),null);
+});
+test('redirect recovery rejects a snapshot that differs from the saved bytes and invalid cancelled state',async()=>{
+ const snapshot=P.single('# Restored'),payload=D.serialize(snapshot);
+ class SDK{async handlePublishCallback(){return {cid:cid(payload),clientState:{snapshot:P.single('# Replaced')}}}}
+ const store=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK})});
+ assert.deepEqual(await store.published('#hashbin_publish=s'),{error:'HashBin content does not match its CID.',snapshot:null});
+ class Cancelled{async handlePublishCallback(){throw Object.assign(new Error('access_denied'),{clientState:{snapshot:{files:[{name:'../bad.html',text:'bad'}]}}})}}
+ const cancelled=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:Cancelled})});
+ assert.deepEqual(await cancelled.published('#hashbin_publish=s'),{error:'The returned project is invalid. Your current project was kept.',snapshot:null});
 });
 test('network loads reject oversized CIDs, invalid UTF-8, missing content, and timeouts',async()=>{
  const remote=cid('x'.repeat(200));await assert.rejects(new HashBinStore({fetchSource:async()=>({ok:false,status:404})}).load(remote),/not found/);

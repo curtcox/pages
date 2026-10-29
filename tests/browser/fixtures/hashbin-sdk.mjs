@@ -12,9 +12,9 @@ export class HashBinClient {
     const outcome = localStorage.getItem('pagesonline:test:publish') || 'approve';
     return cid(content).then(saved => {
       if (outcome === 'cancel') throw new Error('access_denied');
-      if (outcome === 'redirect') {
+      if (outcome.startsWith('redirect')) {
         sessionStorage.setItem('pagesonline:test:transaction', JSON.stringify({ clientState }));
-        location.href = this.config.redirectUri + '#hashbin_publish=fixture&cid=' + saved;
+        location.href = this.config.redirectUri + '#hashbin_publish=fixture' + (outcome === 'redirect-cancel' ? '&error=access_denied' : '&cid=' + saved);
         return { redirected: true };
       }
       return { cid: saved };
@@ -23,7 +23,14 @@ export class HashBinClient {
   async handlePublishCallback({ hash }) {
     const params = new URLSearchParams(hash.slice(1)), saved = JSON.parse(sessionStorage.getItem('pagesonline:test:transaction'));
     sessionStorage.removeItem('pagesonline:test:transaction');
+    if (sessionStorage.getItem('pagesonline:test:delay-callback')) {
+      sessionStorage.removeItem('pagesonline:test:delay-callback');
+      await new Promise(resolve => { globalThis.finishPublishCallback = resolve; });
+    }
+    if (params.has('error')) throw Object.assign(new Error(params.get('error')), { clientState: saved.clientState });
     return { cid: params.get('cid'), clientState: saved.clientState };
   }
   async disconnect() { localStorage.removeItem('hashbin:tokens:' + this.config.clientId); localStorage.setItem('pagesonline:test:revoked', 'yes'); }
 }
+// The released module also exposes this browser global for SRI script loading.
+globalThis.hashbin = { HashBinClient };

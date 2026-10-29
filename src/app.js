@@ -175,8 +175,12 @@ if (!view) {
   catch (_) { notice('The saved project could not be restored. Starting with a fresh page.'); }
 }
 if (initial.kind === 'publish') {
+  const beforeReturn = fingerprint();
   const result = await store.published(location.hash);
-  if (result?.snapshot) { setProject(result.snapshot,{cid:result.cid || null,render:false}); restored = true; } else updateURL();
+  if (beforeReturn !== fingerprint()) {
+    restored = true; updateURL();
+    notice('The HashBin return finished after you edited the project. Your newer edits were kept.');
+  } else if (result?.snapshot) { setProject(result.snapshot,{cid:result.cid || null,render:false}); restored = true; } else updateURL();
   if (result?.error) notice(result.error); else if (result) $('hashbin-status').textContent = 'Saved to HashBin.';
 }
 if (!restored) {
