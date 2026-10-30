@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 const root = new URL('../',import.meta.url);
-const assets = ['index.html','gallery.html','icon.svg','manifest.webmanifest'];
+const assets = ['index.html','preview.html','gallery.html','icon.svg','manifest.webmanifest'];
 async function walk(dir) { for (const item of await fs.readdir(new URL(dir+'/',root),{withFileTypes:true})) { const path = dir+'/'+item.name; if (item.isDirectory()) await walk(path); else assets.push(path); } }
 for (const dir of ['src','ace','vendor','icons','gallery/previews']) await walk(dir);
 assets.sort();

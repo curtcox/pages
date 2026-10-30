@@ -32,12 +32,6 @@ own origin.
 
 ## Open for Pages Online
 
-- Content-Security-Policy (plan C6). `srcdoc` previews inherit the editor document's policy,
-  so any useful `script-src` would also block user scripts (data URLs, inline handlers, CDN
-  scripts, console eval). A meaningful policy needs the preview on its own origin or loaded
-  from a separate URL with its own policy; revisit with the hosting decision.
-  [SN-2026-004](https://hashbin.org/docs/security/sn-2026-004) documents this specifically for
-  Pages Online. On 2026-10-29 the owner chose to preserve `srcdoc` and document this limitation.
-  On 2026-10-30 the owner added a partial policy, `object-src 'none'`, which previews inherit
-  harmlessly; it does not restrict scripts.
-- Hosting decision for an origin of its own (plan section B).
+- Content-Security-Policy (plan C6): deployed 2026-10-30 at `pages.hashbin.page` after the owner chose a separate preview page. The editor forbids inline scripts/eval; `preview.html` hosts an opaque user-content frame under its own policy. Source/origin/token-checked relays preserve console evaluation and navigation, and the host is included in the verified offline inventory. Browser acceptance covers injected editor scripts, user scripts/handlers/eval, a second-origin host, forged messages, existing gallery/rendering/save features, and offline reload. Live HTTPS, cross-site preview and offline fallback acceptance pass.
+- Separate preview-domain rollout: the owner selected `pages.hashbin.us`, which is deployed and configured by the central staging tool; its exact origin is in the production editor CSP. See README. Offline renders use the packaged verified local host; online renders use the configured external host. Keep the child sandbox opaque on either host.
+- B1 is deployed at `pages.hashbin.page`; the old GitHub site is retained for draft recovery.

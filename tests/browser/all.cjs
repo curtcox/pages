@@ -5,7 +5,7 @@ const { chromium, firefox, webkit } = require('playwright');
 const P = require('../../src/project.js'), D = require('../../src/hashbin.js').HashBinDocuments, {catalog} = require('../../src/examples.js');
 const root = path.resolve(__dirname,'../..'), engine = process.env.BROWSER || 'chromium';
 function cid(text){const size=Buffer.alloc(6);size.writeUIntBE(Buffer.byteLength(text),0,6);return size.toString('base64url')+(Buffer.byteLength(text)<=64?Buffer.from(text):require('node:crypto').createHash('sha512').update(text).digest()).toString('base64url')}
-async function startServer(){const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost'),name=decodeURIComponent(url.pathname);const file=path.resolve(root,'.'+(name.endsWith('/')?name+'index.html':name));if(!file.startsWith(root+path.sep))throw Error('path');const body=await fs.readFile(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.webmanifest':'application/manifest+json'})[path.extname(file)]||'text/plain');res.end(body);}catch(_){res.statusCode=404;res.end('Not found');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));return {server,url:'http://127.0.0.1:'+server.address().port+'/'};}
+async function startServer({index=null}={}){const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost'),name=decodeURIComponent(url.pathname);const file=path.resolve(root,'.'+(name.endsWith('/')?name+'index.html':name));if(!file.startsWith(root+path.sep))throw Error('path');const raw=await fs.readFile(file),body=index&&file===path.join(root,'index.html')?index(raw.toString()):raw;res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.webmanifest':'application/manifest+json'})[path.extname(file)]||'text/plain');res.end(body);}catch(_){res.statusCode=404;res.end('Not found');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));return {server,url:'http://127.0.0.1:'+server.address().port+'/'};}
 async function until(work,label,timeout=8000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{if(await work())return;}catch(e){last=e;}await new Promise(r=>setTimeout(r,60));}throw Error(label+(last?' — '+last.message:''));}
 (async()=>{
  await fs.mkdir(path.join(root,'test-results'),{recursive:true});
@@ -14,7 +14,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
  try{
   browser=await ({chromium,firefox,webkit})[engine].launch();const context=await browser.newContext({viewport:{width:1280,height:850},acceptDownloads:true,serviceWorkers:'block'});page=await context.newPage();page.setDefaultTimeout(8000);
   await context.route('https://hashbin.org/sdk/v0.4.0/hashbin.js',route=>route.abort());
-  const frame=()=>page.frameLocator('#preview'),logs=()=>page.locator('#console-list').textContent();
+  const frame=()=>page.frameLocator('#preview').frameLocator('#preview-content'),logs=()=>page.locator('#console-list').textContent();
   // Links that would replace unsaved work ask first; tests accept unless they say otherwise.
   const open=async(query='',answer=true)=>{const reply=d=>answer?d.accept():d.dismiss();page.on('dialog',reply);try{await page.goto(base+query);await page.waitForFunction(()=>window.pagesApp&&document.querySelector('#file-tabs button'));}finally{page.off('dialog',reply);}};
   const fixture=async(files)=>{await page.evaluate(files=>pagesApp.setProject({files:Object.entries(files).map(([name,text])=>({name,text}))}),files);};
@@ -31,6 +31,19 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
    await page.evaluate(()=>pagesApp.editor.setValue("document.querySelector('h1').textContent='Shortcut';",-1));await page.keyboard.press(process.platform==='darwin'?'Meta+Enter':'Control+Enter');await until(async()=>await frame().locator('h1').textContent()==='Shortcut','keyboard render');
    await page.locator('#auto-refresh').check();await page.getByRole('tab',{name:'script.js',exact:true}).dblclick();await page.locator('#file-name').fill('app.js');await page.locator('#rename-file').click();assert.ok((await page.evaluate(()=>pagesApp.getProject())).files.some(f=>f.name==='app.js'));
    await fixture({'index.md':'# Only page'});await page.locator('#file-menu').click();page.once('dialog',d=>d.accept());await page.locator('#delete-file').click();assert.match(await page.locator('#notice').textContent(),/at least one/);await page.locator('#file-dialog button[aria-label=Close]').click();
+  });
+  await step('editor CSP blocks injected scripts while previews retain scripts, handlers and eval',async()=>{
+   await page.evaluate(()=>{
+    globalThis.editorViolations=[];
+    addEventListener('securitypolicyviolation',e=>editorViolations.push(e.effectiveDirective));
+    const script=document.createElement('script');script.textContent='globalThis.injectedEditorScript=true';document.head.append(script);
+    const button=document.createElement('button');button.setAttribute('onclick','globalThis.injectedEditorHandler=true');document.body.append(button);button.click();button.remove();
+   });
+   await until(async()=>await page.evaluate(()=>editorViolations.length>=2),'editor CSP violations');
+   assert.deepEqual(await page.evaluate(()=>[globalThis.injectedEditorScript,globalThis.injectedEditorHandler]),[undefined,undefined]);
+   await context.route('https://preview-library.example/library.js',route=>route.fulfill({body:'globalThis.libraryValue=40;',contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'}}));
+   await fixture({'index.html':`<script src="https://preview-library.example/library.js"></script><h1>Scripts</h1><button onclick="this.textContent=eval('libraryValue + 2')">Evaluate</button><script>console.log('preview eval',eval('1+2'));</script>`});
+   await frame().getByRole('button',{name:'Evaluate',exact:true}).click();assert.equal(await frame().locator('button').textContent(),'42');assert.match(await logs(),/preview eval 3/);
   });
   await step('Markdown navigation, heading anchors and Back',async()=>{
    await fixture({'index.md':'# Home\n\n[About](about.md#details)','about.md':'# About\n\n## Details\n\nThe other page.'});await frame().getByRole('link',{name:'About'}).click();await until(async()=>await frame().locator('h1').textContent()==='About','Markdown navigate');assert.equal(await page.locator('#preview-path').textContent(),'about.md');await page.locator('#back').click();await until(async()=>await frame().locator('h1').textContent()==='Home','preview Back');
@@ -49,12 +62,12 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
   await step('storage shim and opaque origin isolate the editor and sibling apps',async()=>{
    await page.evaluate(()=>{localStorage.setItem('pagesonline:test-secret','must stay private');sessionStorage.setItem('pagesonline:test-secret','private session');});
    await fixture({'index.html':`<h1>Isolated</h1><script>
-    for(const [name,read] of Object.entries({parentDOM:()=>parent.document.body,editorStorage:()=>parent.localStorage.getItem('pagesonline:test-secret'),editorSession:()=>parent.sessionStorage.getItem('pagesonline:test-secret'),topNavigation:()=>top.location.href='https://example.invalid/escaped'})){try{read();console.log(name,'FAIL');}catch(e){console.log(name,'blocked');}}
+    for(const [name,read] of Object.entries({parentDOM:()=>parent.document.body,editorStorage:()=>parent.localStorage.getItem('pagesonline:test-secret'),editorSession:()=>parent.sessionStorage.getItem('pagesonline:test-secret'),parentNavigation:()=>parent.location.href='https://example.invalid/escaped',topNavigation:()=>top.location.href='https://example.invalid/escaped'})){try{read();console.log(name,'FAIL');}catch(e){console.log(name,'blocked');}}
     localStorage.setItem('inside','yes');sessionStorage.setItem('inside','session');document.cookie='secret=oops';console.log('shim',localStorage.getItem('inside'),sessionStorage.getItem('inside'),document.cookie,'origin',self.origin);
     Promise.resolve().then(()=>caches.open('forbidden')).then(()=>console.error('cache FAIL'),()=>console.log('cache blocked'));
    </script>`});
-   await until(async()=>/cache blocked/.test(await logs()),'storage isolation');const output=await logs();for(const text of ['parentDOM blocked','editorStorage blocked','editorSession blocked','topNavigation blocked','shim yes session  origin null'])assert.ok(output.includes(text),text+': '+output);
-   assert.ok(page.url().startsWith(base));assert.equal(await page.evaluate(()=>localStorage.getItem('pagesonline:test-secret')),'must stay private');assert.equal(await page.locator('#preview').getAttribute('sandbox'),'allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads');
+   await until(async()=>/cache blocked/.test(await logs()),'storage isolation');const output=await logs();for(const text of ['parentDOM blocked','editorStorage blocked','editorSession blocked','parentNavigation blocked','topNavigation blocked','shim yes session  origin null'])assert.ok(output.includes(text),text+': '+output);
+   assert.ok(page.url().startsWith(base));assert.equal(await page.evaluate(()=>localStorage.getItem('pagesonline:test-secret')),'must stay private');assert.equal(await page.frameLocator('#preview').locator('#preview-content').getAttribute('sandbox'),'allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads');
   });
   await step('console objects, repeat counts, safe text, file/line jump, eval and spoof rejection',async()=>{
    await fixture({'index.html':'<h1>Console</h1><script src="script.js"></script>','script.js':"console.log('<img src=x onerror=alert(1)>');\nconsole.warn({answer:42});\nconsole.log('repeat');console.log('repeat');\nthrow Error('broken');"});
@@ -68,9 +81,9 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
   });
   await step('Share editor/page-only links roundtrip and ?run=0 postpones execution',async()=>{
    await fixture({'index.md':'# A shareable page','about.md':'# About'});await page.locator('#share').click();const editorLink=await page.locator('#share-url').inputValue();await page.locator('#share-mode').selectOption('view');const viewLink=await page.locator('#share-url').inputValue();await page.locator('#share-no-run').check();const paused=await page.locator('#share-url').inputValue();await page.locator('#share-close').click();
-   const shared=await context.newPage();await shared.goto(editorLink);await shared.waitForFunction(()=>window.pagesApp);await until(async()=>await shared.frameLocator('#preview').locator('h1').textContent()==='A shareable page','shared page rendered');
-   await shared.goto(viewLink);assert.ok(await shared.locator('#view-strip').isVisible());assert.equal(await shared.locator('.ace_editor').count(),0);await until(async()=>await shared.frameLocator('#preview').locator('h1').textContent()==='A shareable page','shared page rendered');assert.ok(!(await shared.locator('#edit-link').getAttribute('href')).includes('view'));
-   await shared.goto(paused);await shared.waitForFunction(()=>window.pagesApp);assert.equal(await shared.locator('#preview').getAttribute('srcdoc'),null);await shared.locator('#view-run').click();await until(async()=>await shared.frameLocator('#preview').locator('h1').textContent()==='A shareable page','shared page rendered');await shared.close();
+   const shared=await context.newPage();await shared.goto(editorLink);await shared.waitForFunction(()=>window.pagesApp);await until(async()=>await shared.frameLocator('#preview').frameLocator('#preview-content').locator('h1').textContent()==='A shareable page','shared page rendered');
+   await shared.goto(viewLink);assert.ok(await shared.locator('#view-strip').isVisible());assert.equal(await shared.locator('.ace_editor').count(),0);await until(async()=>await shared.frameLocator('#preview').frameLocator('#preview-content').locator('h1').textContent()==='A shareable page','shared page rendered');assert.ok(!(await shared.locator('#edit-link').getAttribute('href')).includes('view'));
+   await shared.goto(paused);await shared.waitForFunction(()=>window.pagesApp);assert.equal(await shared.locator('#preview').getAttribute('src'),null);await shared.locator('#view-run').click();await until(async()=>await shared.frameLocator('#preview').frameLocator('#preview-content').locator('h1').textContent()==='A shareable page','shared page rendered');await shared.close();
   });
   await step('is.gd shortening and QR SVG/PNG downloads',async()=>{
    await context.route('https://api.allorigins.win/**',route=>route.fulfill({json:{contents:'https://is.gd/fixture'}}));await page.locator('#share').click();await page.locator('#share-shorten').click();await until(async()=>await page.locator('#share-url').inputValue()==='https://is.gd/fixture','short link');await page.locator('#share-close').click();
@@ -88,7 +101,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
   await step('links never silently replace unsaved work; view links never overwrite it',async()=>{
    await fixture({'index.md':'# Unsaved work'});await page.evaluate(()=>dispatchEvent(new Event('beforeunload')));
    await open('?example=hello',false);assert.equal((await page.evaluate(()=>pagesApp.getProject())).files[0].text,'# Unsaved work');assert.doesNotMatch(page.url(),/example=hello/);
-   await page.goto(base+'?example=hello&view');await page.waitForFunction(()=>window.pagesApp&&document.querySelector('#preview').srcdoc.length>0);assert.doesNotMatch(JSON.stringify(await page.evaluate(()=>pagesApp.getProject())),/Unsaved work/);assert.match(await page.evaluate(()=>localStorage.getItem('pagesonline:project')),/Unsaved work/);
+   await page.goto(base+'?example=hello&view');await page.waitForFunction(()=>window.pagesApp&&document.querySelector('#preview').getAttribute('src') && pagesApp.preview.pending === null);assert.doesNotMatch(JSON.stringify(await page.evaluate(()=>pagesApp.getProject())),/Unsaved work/);assert.match(await page.evaluate(()=>localStorage.getItem('pagesonline:project')),/Unsaved work/);
    await open('?example=hello');assert.doesNotMatch(JSON.stringify(await page.evaluate(()=>pagesApp.getProject())),/Unsaved work/);await open('?example=modules');assert.ok((await page.evaluate(()=>pagesApp.getProject())).files.some(f=>f.name.endsWith('.js')));
   });
   await step('HashBin placeholder, Publish popup/redirect saves, legacy token revocation, CID load and stale-load guard',async()=>{
@@ -114,7 +127,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
    const popupCid=cid(D.serialize(await page.evaluate(()=>pagesApp.getProject())));await page.locator('#hashbin-confirm').click();await until(()=>Promise.resolve(page.url().includes('#'+popupCid)),'popup saved CID');assert.match(await page.locator('#hashbin-status').textContent(),/Saved/);
    const savedPageLink=new URL(await page.locator('#share-url').inputValue());assert.equal(savedPageLink.hash,'#'+popupCid);assert.ok(savedPageLink.searchParams.has('view'));assert.equal(savedPageLink.searchParams.get('run'),'0');assert.equal(await page.locator('#hashbin-message a').getAttribute('href'),savedPageLink.href);
    await context.route('https://256t.us/'+popupCid,route=>route.fulfill({body:D.serialize(P.single('# Popup save')),headers:{'Access-Control-Allow-Origin':'*'}}));
-   const savedPage=await context.newPage();await savedPage.goto(savedPageLink.href);await savedPage.waitForFunction(()=>window.pagesApp);assert.ok(await savedPage.locator('#view-strip').isVisible());assert.equal(await savedPage.locator('#preview').getAttribute('srcdoc'),null);await savedPage.locator('#view-run').click();assert.equal(await savedPage.frameLocator('#preview').locator('h1').textContent(),'Popup save');await savedPage.close();
+   const savedPage=await context.newPage();await savedPage.goto(savedPageLink.href);await savedPage.waitForFunction(()=>window.pagesApp);assert.ok(await savedPage.locator('#view-strip').isVisible());assert.equal(await savedPage.locator('#preview').getAttribute('src'),null);await savedPage.locator('#view-run').click();assert.equal(await savedPage.frameLocator('#preview').frameLocator('#preview-content').locator('h1').textContent(),'Popup save');await savedPage.close();
    await page.locator('#share-mode').selectOption('editor');await page.locator('#share-no-run').uncheck();const savedEditorLink=new URL(await page.locator('#share-url').inputValue());assert.equal(savedEditorLink.hash,'#'+popupCid);assert.ok(!savedEditorLink.searchParams.has('view'));assert.ok(!savedEditorLink.searchParams.has('run'));assert.equal(await page.locator('#hashbin-message a').getAttribute('href'),savedEditorLink.href);await page.locator('#share-close').click();
    await page.evaluate(()=>{pagesApp.setProject(Project.single('# Snapshot awaiting approval'));const publish=pagesApp.store.client.publish.bind(pagesApp.store.client);pagesApp.store.client.publish=(...args)=>new Promise(resolve=>{window.finishPublish=()=>resolve(publish(...args));});});
    await page.locator('#share').click();await until(async()=>await page.locator('#hashbin-confirm').isEnabled(),'publish ready');await page.locator('#hashbin-confirm').click();await page.evaluate(()=>{pagesApp.setProject(Project.single('# Edited during approval'));finishPublish();});await until(async()=>/Saved/.test(await page.locator('#hashbin-message').textContent()),'stale save finishes');assert.equal((await page.evaluate(()=>pagesApp.getProject())).files[0].text,'# Edited during approval');assert.ok(!D.isCID(new URL(page.url()).hash.slice(1)));await page.locator('#share-close').click();await open();
@@ -135,11 +148,11 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
    await open('#'+cid('# Tiny CID'));await until(async()=>await frame().locator('h1').textContent()==='Tiny CID','inline CID');
   });
   await step('crash-safe startup disables automatic execution',async()=>{
-   await until(async()=>await page.evaluate(()=>localStorage.getItem('pagesonline:rendering')===null),'settled render');await page.evaluate(()=>localStorage.setItem('pagesonline:rendering','1'));await page.reload();await page.waitForFunction(()=>window.pagesApp);assert.ok(!(await page.locator('#auto-refresh').isChecked()));assert.equal(await page.locator('#preview').getAttribute('srcdoc'),null);assert.match(await page.locator('#notice').textContent(),/last preview/);await page.locator('#run').click();await until(async()=>await frame().locator('h1').textContent()==='Tiny CID','manual recovery rendered');
+   await until(async()=>await page.evaluate(()=>localStorage.getItem('pagesonline:rendering')===null),'settled render');await page.evaluate(()=>localStorage.setItem('pagesonline:rendering','1'));await page.reload();await page.waitForFunction(()=>window.pagesApp);assert.ok(!(await page.locator('#auto-refresh').isChecked()));assert.equal(await page.locator('#preview').getAttribute('src'),null);assert.match(await page.locator('#notice').textContent(),/last preview/);await page.locator('#run').click();await until(async()=>await frame().locator('h1').textContent()==='Tiny CID','manual recovery rendered');
   });
   await step('all gallery projects open in editor and page-only with no script errors',async()=>{
    await open();await page.evaluate(()=>localStorage.removeItem('pagesonline:rendering'));const accept=d=>d.accept();page.on('dialog',accept);
-   for(const sample of catalog){for(const view of [false,true]){await page.goto(base+'?example='+sample.id+(view?'&view':''));await page.waitForFunction(()=>document.querySelector('#preview').srcdoc.length>0);await frame().locator('body').waitFor();await page.waitForTimeout(100);const errors=await page.locator('#console-list .error').allTextContents();assert.deepEqual(errors,[],sample.id+' errors');}}
+   for(const sample of catalog){for(const view of [false,true]){await page.goto(base+'?example='+sample.id+(view?'&view':''));await page.waitForFunction(()=>document.querySelector('#preview').getAttribute('src') && pagesApp.preview.pending === null);await frame().locator('body').waitFor();await page.waitForTimeout(100);const errors=await page.locator('#console-list .error').allTextContents();assert.deepEqual(errors,[],sample.id+' errors');}}
    await page.goto(base+'gallery.html');assert.equal(await page.locator('.gallery-card').count(),19);await page.locator('#search').fill('postcards');assert.equal(await page.locator('.gallery-card').count(),1);await page.locator('#search').fill('');await page.getByRole('button',{name:'Markdown',exact:true}).click();assert.equal(await page.locator('.gallery-card').count(),4);page.off('dialog',accept);
   });
   await step('mobile Preview/Code/Console, More, scrolling file tabs and touch targets',async()=>{
@@ -148,6 +161,31 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const selector of ['#run','#more summary','.mobile-tabs button']){for(const rect of await page.locator(selector).evaluateAll(items=>items.map(e=>e.getBoundingClientRect().height)))assert.ok(rect>=40,selector+': '+rect);}
    await page.getByRole('button',{name:'Code',exact:true}).click();await page.evaluate(()=>pagesApp.setProject({files:[{name:'index.md',text:'# Many files'},...Array.from({length:10},(_,i)=>({name:'long-file-name-'+i+'.md',text:'# '+i}))]}));assert.ok(await page.locator('#file-tabs').evaluate(e=>e.scrollWidth>e.clientWidth));assert.ok(await page.locator('#file-tabs button').evaluateAll(items=>items.every(e=>e.scrollWidth<=e.clientWidth))); await page.screenshot({path:path.join(root,'test-results',engine+'-mobile.png')});
   });
+  await step('a separate preview origin preserves rendering and rejects forged relay messages',async()=>{
+   const previewServer=await startServer(),previewOrigin=new URL(previewServer.url).origin;
+   // Real responses preserve the browser's network-origin checks for both local origins.
+   const editorServer=await startServer({index:html=>html.replace('content="./preview.html"','content="'+previewServer.url+'preview.html"').replace("frame-src 'self'", "frame-src 'self' "+previewOrigin)});
+   const isolated=await browser.newContext({serviceWorkers:'block'});
+   try {
+    const tab=await isolated.newPage();await tab.goto(editorServer.url);await tab.waitForFunction(()=>window.pagesApp);
+    await tab.evaluate(()=>{localStorage.setItem('preview-secret','editor only');pagesApp.setProject(Project.single('<h1>Separate origin</h1><script>console.log("separate eval",eval("6*7"));</script>'));});
+    const user=tab.frameLocator('#preview').frameLocator('#preview-content');
+    assert.equal(await user.locator('h1').textContent(),'Separate origin');
+    assert.equal(new URL(await tab.locator('#preview').getAttribute('src')).origin,previewOrigin);
+    assert.equal(await user.locator('h1').evaluate(()=>{try{return top.localStorage.getItem('preview-secret');}catch(_){return 'blocked';}}),'blocked');
+    assert.equal(await user.locator('h1').evaluate(()=>{try{return parent.document.title;}catch(_){return 'blocked';}}),'blocked');
+    const token=await tab.evaluate(()=>pagesApp.preview.token);
+    await user.locator('h1').evaluate((_,token)=>{
+     parent.postMessage({channel:'pages-online',token,type:'render',html:'<h1>FORGED</h1>'},'*');
+     top.postMessage({channel:'pages-online',token,type:'console',level:'error',args:['FORGED']},'*');
+     parent.postMessage({channel:'pages-online',token,type:'host-ready'},'*');
+    },token);
+    await tab.locator('#console-expression').fill('21 * 2');await tab.locator('#console-form button').click();
+    await until(async()=>/42/.test(await tab.locator('#console-list').textContent()),'cross-origin console relay');
+    assert.doesNotMatch(await tab.locator('#console-list').textContent(),/FORGED/);assert.equal(await user.locator('h1').textContent(),'Separate origin');
+    await tab.evaluate(()=>pagesApp.setProject(Project.single('# Fresh render')));assert.equal(await user.locator('h1').textContent(),'Fresh render');
+   } finally {await isolated.close();await new Promise(r=>previewServer.server.close(r));await new Promise(r=>editorServer.server.close(r));}
+  });
   await context.close();
   await step('offline reload without a server connection preserves editing and rendering',async()=>{
    const offline=await browser.newContext({serviceWorkers:'allow'});const tab=await offline.newPage();await tab.goto(base);await tab.waitForFunction(()=>document.querySelector('#offline-status').textContent==='Available offline',null,{timeout:25000});
@@ -155,7 +193,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
    await tab.evaluate(async()=>{const cache=await caches.open((await caches.keys()).find(n=>n.startsWith('pagesonline-')));const poison=body=>new Response(body,{headers:{'Content-Type':'text/javascript'}});await cache.put(new URL('src/console-view.js',location.href).href,poison('globalThis.poisonedCache=true;'));await cache.put(new URL('injected.html',location.href).href,new Response('<script>top.poisonedCache=true</script>',{headers:{'Content-Type':'text/html'}}));});
    await tab.reload();await tab.waitForFunction(()=>window.pagesApp);assert.equal(await tab.evaluate(()=>globalThis.poisonedCache),undefined);await tab.waitForFunction(()=>document.querySelector('#offline-status').textContent==='Offline setup incomplete');
    await tab.goto(base+'injected.html');assert.equal(await tab.evaluate(()=>globalThis.poisonedCache),undefined);await tab.goto(base);await tab.waitForFunction(()=>window.pagesApp);
-   await tab.locator('#offline-action').click();await tab.waitForFunction(()=>document.querySelector('#offline-status').textContent==='Available offline',null,{timeout:25000});await offline.setOffline(true);await tab.reload();await tab.waitForFunction(()=>window.pagesApp);assert.equal(await tab.frameLocator('#preview').locator('h1').textContent(),'Hello, world.');await tab.evaluate(()=>pagesApp.setProject(Project.single('# Offline works')));await until(async()=>await tab.frameLocator('#preview').locator('h1').textContent()==='Offline works','offline edit rendered');await tab.goto(base+'gallery.html');assert.equal(await tab.locator('.gallery-card').count(),19);await offline.close();
+   await tab.locator('#offline-action').click();await tab.waitForFunction(()=>document.querySelector('#offline-status').textContent==='Available offline',null,{timeout:25000});await offline.setOffline(true);await tab.reload();await tab.waitForFunction(()=>window.pagesApp);assert.equal(await tab.frameLocator('#preview').frameLocator('#preview-content').locator('h1').textContent(),'Hello, world.');await tab.evaluate(()=>pagesApp.setProject(Project.single('# Offline works')));await until(async()=>await tab.frameLocator('#preview').frameLocator('#preview-content').locator('h1').textContent()==='Offline works','offline edit rendered');await tab.goto(base+'gallery.html');assert.equal(await tab.locator('.gallery-card').count(),19);await offline.close();
   });
   console.log(`${passed} ${engine} browser checks passed.`);
  }catch(error){await fs.mkdir(path.join(root,'test-results'),{recursive:true});await page?.screenshot({path:path.join(root,'test-results',engine+'-failure.png'),fullPage:true}).catch(()=>{});console.error('FAIL '+engine+' · '+current+'\n'+error.stack);console.error('Console:',await page?.locator('#console-list').textContent().catch(()=>''));process.exitCode=1;}

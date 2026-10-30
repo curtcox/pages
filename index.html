@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Partial policy: srcdoc previews inherit it, so it leaves script-src open for user code (see
-       todo/security_followups.md) and only forbids plugin content. -->
-  <meta http-equiv="Content-Security-Policy" content="object-src 'none'">
+  <!-- User scripts inherit preview.html's policy, separately from this editor. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://hashbin.org/sdk/v0.4.0/; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://hashbin.org https://256t.us https://api.allorigins.win; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="pages-preview-url" content="./preview.html">
   <meta name="theme-color" content="#203f3b">
   <meta name="description" content="A small workspace for the web. Build HTML, CSS, JavaScript and Markdown pages in your browser.">
   <meta name="hashbin-client-id" content="app_3f65398b-b2d1-4f20-a9de-3458894ce31d">
@@ -56,7 +56,7 @@
     <div id="splitter" role="separator" tabindex="0" aria-label="Resize editor" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="75" aria-valuenow="45"></div>
     <section id="preview-pane" aria-label="Preview and console">
       <div class="preview-heading"><div class="page-location"><button id="back" disabled aria-label="Previous preview page">←</button><span id="preview-path">index.html</span><span class="user-content-label" title="Everything below runs your project's code. Pages Online never asks for HashBin sign-in or prices inside it.">User content</span></div><div class="preview-actions"><div class="devices" aria-label="Preview width"><button data-width="375" title="Phone: 375px">Phone</button><button data-width="768" title="Tablet: 768px">Tablet</button><button data-width="full" aria-pressed="true">Full</button></div><button id="reload" title="Reload preview" aria-label="Reload preview">↻</button><button id="open-page">Open page ↗</button></div></div>
-      <div id="preview-stage"><iframe id="preview" title="Your page preview" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"></iframe></div>
+      <div id="preview-stage"><iframe id="preview" title="Your page preview"></iframe></div>
       <section id="console-pane" aria-label="Console">
         <header class="console-heading"><button id="toggle-console" aria-expanded="true">Console <span id="console-count">0</span></button><div><label><input id="console-clear-refresh" type="checkbox" checked> Clear on refresh</label><button id="console-clear">Clear</button><button id="console-copy">Copy</button></div></header>
         <div id="console-list" role="log" aria-label="Console output"></div>
@@ -71,5 +71,6 @@
   <dialog id="qr-dialog"><header><h2>A page to pass along</h2><button id="qr-close" aria-label="Close">×</button></header><label>QR destination<select id="qr-mode"><option value="editor">Opens the editor</option><option value="view">Opens the page only</option></select></label><div id="qr-code"></div><p id="qr-warning" class="fine" role="status"></p><div class="dialog-actions"><button id="qr-svg">Download SVG</button><button id="qr-png">Download PNG</button></div></dialog>
   <script src="vendor/marked.min.js?v=1"></script><script src="vendor/acorn.min.js?v=1"></script><script src="vendor/lz-string.min.js?v=1"></script>
   <script src="src/project.js?v=1"></script><script src="src/markdown.js?v=1"></script><script src="src/loop-guard.js?v=1"></script><script src="src/preview-runtime.js?v=1"></script><script src="src/bundler.js?v=1"></script><script src="src/preview.js?v=1"></script><script src="src/console-view.js?v=1"></script><script src="src/render-scheduler.js?v=1"></script><script src="src/hashbin.js?v=1"></script><script src="src/hashbin-panel.js?v=1"></script><script src="src/share-links.js?v=1"></script><script src="src/qr.js?v=1"></script><script src="src/zip.js?v=1"></script><script src="src/export.js?v=1"></script><script src="src/examples.js?v=1"></script><script src="src/app.js?v=1"></script><script src="src/offline.js?v=1"></script>
+<script type="module" src="src/domain-migration.js"></script>
 </body>
 </html>

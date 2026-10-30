@@ -57,7 +57,9 @@ npm run offline
 
 Documents use the sibling apps' `hashbin-diagram` envelope with `type: "pages"`, `src` containing the entry page, and `pages` containing the project. Editing invalidates a saved CID link and restores a complete source link. A link that would replace work kept in this browser asks first.
 
-The editor's scripts are in files. A strict Content Security Policy remains deferred: `srcdoc` previews inherit the editor's policy, so restricting scripts here would also block user scripts and console evaluation. The opaque sandbox is preserved; a useful script policy needs a separate preview document or origin. See [HashBin's Pages Online security note](https://hashbin.org/docs/security/sn-2026-004) and [the tracked follow-up](todo/security_followups.md).
+The editor's Content Security Policy forbids inline scripts and JavaScript evaluation, and permits scripts only from its own origin and the pinned SDK release. Previews load through `preview.html`, a small trusted host with its own policy. It puts bundled user content in an opaque child frame and relays bounded, source/origin/token-checked messages. User scripts, inline handlers, external libraries, modules and console evaluation run inside that child, without inheriting the editor's script restrictions. The verified offline inventory includes the host and its script.
+
+For a separate preview domain, deploy `preview.html` and `src/preview-host.js` at the same relative paths on that static host. Set `pages-preview-url` in `index.html` to its exact HTTPS URL (for example `https://pages-preview.example.net/preview.html`) and add only that origin to the editor's `frame-src`. The host needs its own permissive preview policy; do not apply the editor CSP to it through global response headers. Local development defaults to `./preview.html`, still with an opaque user frame and an independent policy. When offline, the editor uses its packaged, verified local host, preserving the opaque user frame. Online renders use the configured separate host. Keep HashBin callbacks on the editor domain. Domain selection/DNS remain an owner task; [the tracked follow-up](todo/security_followups.md) records the remaining rollout.
 
 ## Limits
 
@@ -76,3 +78,7 @@ Pushes to `main` independently deploy the repository root using GitHub Pages Act
 Inspired by GraphvizOnline, [ManimOnline](https://curtcox.github.io/ManimOnline/), [Gnuplot Online](https://curtcox.github.io/GnuplotOnline/), and [Python Online](https://curtcox.github.io/PythonOnline/). GraphvizOnline's license is preserved in `LICENSE-graphvizonline`. Vendored Ace (BSD-3), marked (MIT), acorn (MIT), lz-string (MIT), and Project Nayuki's QR encoder (MIT) retain their licenses. Gallery samples are original; your pages are your own.
 
 The implementation design is in [`todo/master_plan.md`](todo/master_plan.md); future contributors should read [`AGENTS.md`](AGENTS.md).
+
+## Canonical HashBin address
+
+The production app is [https://pages.hashbin.page/](https://pages.hashbin.page/). The GitHub Pages copy is kept for moving old drafts through **Move saved work** or **Download backup**. Transfers copy only this app's documents and public settings, keep the old copy, and never copy HashBin credentials or Python filesystem permissions. Deployment is managed by [HashBin's first-party deployment tool](https://github.com/curtcox/hashbin.org/blob/main/scripts/deploy-owned-apps.mjs).

@@ -27,7 +27,8 @@ if (process.argv.includes('--check')) {
     await fs.mkdir(target,{recursive:true});
     for (const sample of catalog) {
       await page.goto(`http://127.0.0.1:${port}/?example=${sample.id}&view`);
-      await page.waitForFunction(()=>document.getElementById('preview').getAttribute('srcdoc'));
+      await page.frameLocator('#preview').locator('#preview-content[srcdoc]').waitFor();
+      await page.frameLocator('#preview').frameLocator('#preview-content').locator('body').waitFor();
       await page.waitForTimeout(350);
       // The locator screenshot contains only the user page, without the editor's strip.
       const png = await page.locator('#preview').screenshot({animations:'disabled'});
