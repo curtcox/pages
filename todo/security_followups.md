@@ -38,4 +38,6 @@ own origin.
   from a separate URL with its own policy; revisit with the hosting decision.
   [SN-2026-004](https://hashbin.org/docs/security/sn-2026-004) documents this specifically for
   Pages Online. On 2026-10-29 the owner chose to preserve `srcdoc` and document this limitation.
+  On 2026-10-30 the owner added a partial policy, `object-src 'none'`, which previews inherit
+  harmlessly; it does not restrict scripts.
 - Hosting decision for an origin of its own (plan section B).
