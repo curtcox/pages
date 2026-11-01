@@ -38,6 +38,10 @@ jobs:
           python-version: '3.14'
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: URL identity and draft recovery
+        run: node tests/browser/url-state.cjs
+        env:
+          BROWSER: ${{ matrix.browser }}
       - run: npm run test:browser
         env:
           BROWSER: ${{ matrix.browser }}

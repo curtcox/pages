@@ -4,6 +4,7 @@ const $ = id => document.getElementById(id);
 const safeStore = name => { try { const value = window[name]; value.getItem('pagesonline:probe'); return value; } catch (_) { return null; } };
 const local = safeStore('localStorage'), session = safeStore('sessionStorage');
 const key = 'pagesonline:project', renderingKey = 'pagesonline:rendering';
+const drafts = new LocalDrafts({ storage: local, key, parse: text => Project.validate(JSON.parse(text)) });
 const notice = message => { $('notice').textContent = message; $('notice').hidden = !message; if (view && message) $('view-strip').title = message; };
 let project = Project.starter(), editor, fallback, changing = false, urlTimer, savedCID = null, savedFingerprint = null, annotations = new Map();
 let initial; try { initial = ShareLinks.parse(location.href,LZString.decompressFromEncodedURIComponent); } catch (error) { initial = {kind:'invalid',run:false}; }
@@ -13,21 +14,9 @@ try { crashed = local?.getItem(renderingKey) === '1'; } catch (_) {}
 if (crashed) { auto = false; notice('The last preview may have frozen the page. Fix the code, then press Run.'); }
 const fingerprint = () => JSON.stringify({files:project.files,entry:project.entry});
 const snapshot = () => Project.validate(project);
-function persist() {
-  if (view) return; // View links display a project; they never replace work kept in this browser.
-  try { local?.setItem(key,JSON.stringify(snapshot())); $('save-status').textContent = local ? 'Saved in this browser' : 'Browser storage unavailable'; }
-  catch (_) { $('save-status').textContent = 'Browser storage full — download a backup'; }
-}
+function persist(edit = false) { if (!view) drafts.attempt(snapshot(), edit === true); }
 function shareLink(options = {}) {
   return ShareLinks.build({url:location.href,project:snapshot(),compress:LZString.compressToEncodedURIComponent,view:options.view ?? view,run:options.run ?? true,page:preview.page || project.entry,cid:savedFingerprint === fingerprint() ? savedCID : null});
-}
-// Links can come from anyone; never let one silently replace work kept in this browser.
-function acceptLink(incoming) {
-  const same = (a,b)=>JSON.stringify([a.files,a.entry]) === JSON.stringify([b.files,b.entry]);
-  // Starters and gallery samples are not unsaved work.
-  const pristine = [...['default','blank','markdown','site'].map(kind=>Project.starter(kind)),...Examples.catalog.map(sample=>sample.project)];
-  if (view || same(project,incoming) || pristine.some(other=>same(project,Project.validate(other)))) return true;
-  return confirm('This link opens a different project. Replace the project saved in this browser?\n\nChoose Cancel to keep your current work.');
 }
 function updateURL() { try { history.replaceState(null,'',shareLink().long); } catch (_) { /* Large links may exceed browser history limits. */ } }
 function setAuto(value) { auto = value; $('auto-refresh').checked = value; $('auto-mobile').checked = value; if (!value) scheduler.cancel(); }
@@ -41,7 +30,7 @@ function changed() {
   const text = editor ? editor.getValue() : fallback.value;
   const next = { ...project, files:project.files.map(f=>f.name === project.active ? {...f,text} : f) };
   try { project = Project.validate(next); } catch (error) { scheduler.cancel(); notice(error.message); return; }
-  panel?.cancelLoad(); annotations.delete(project.active); applyAnnotations(); persist();
+  panel?.cancelLoad(); annotations.delete(project.active); applyAnnotations(); persist(true);
   clearTimeout(urlTimer); urlTimer = setTimeout(updateURL,700);
   if (auto) scheduler.schedule({detect:false});
 }
@@ -92,16 +81,17 @@ function run() {
   catch (error) { consoleView.add({level:'error',args:[error.message]}); notice(error.message); try { local?.removeItem(renderingKey); } catch (_) {} }
 }
 const scheduler = new RenderScheduler({detect:()=>{},render:run,renderDelay:500});
-function setProject(value,{cid = null,render = auto,reset = true,update = true} = {}) {
+function setProject(value,{cid = null,render = auto,reset = true,update = true,localEdit = true} = {}) {
+  if (!localEdit) drafts.opened();
   project = Project.validate(value); panel?.cancelLoad(); scheduler.cancel();
   sessions.clear(); annotations.clear(); if (reset) preview.reset();
   if (cid) { savedCID = cid; savedFingerprint = fingerprint(); } else { savedCID = null; savedFingerprint = null; }
   if (editor || fallback) selectFile(project.active); else renderTabs();
-  persist(); if (update) updateURL(); if (render) run();
+  persist(localEdit); if (update) updateURL(); if (render) run();
 }
 const store = new HashBinStore({clientId:document.querySelector('meta[name=hashbin-client-id]').content,redirectUri:new URL('./',location.href).href,storage:local,transactionStorage:session});
-let linkLoad = false;
-const panel = new HashBinPanel({store,getSnapshot:snapshot,getFingerprint:fingerprint,onLoad:(value,cid)=>{ if (linkLoad && !acceptLink(value)) { kept = true; return false; } setProject(value,{cid}); $('more').open = false; },onSaved:(cid,fp,link)=>{savedCID = cid;savedFingerprint = fp;history.replaceState(null,'',link);refreshShare();},getShareOptions:shareOptions,getSavedLink:(cid,project)=>ShareLinks.build({url:location.href,project,cid,...shareOptions()}).long});
+const panel = new HashBinPanel({store,getSnapshot:snapshot,getFingerprint:fingerprint,onLoad:(value,cid)=>{ setProject(value,{cid,localEdit:false}); $('more').open = false; },onSaved:(cid,fp,link)=>{savedCID = cid;savedFingerprint = fp;history.replaceState(null,'',link);refreshShare();},getShareOptions:shareOptions,getSavedLink:(cid,project)=>ShareLinks.build({url:location.href,project,cid,...shareOptions()}).long});
+drafts.mount(document.querySelector('.more-menu'), value => { clearTimeout(urlTimer); urlTimer = null; setProject(value,{render:false,localEdit:false}); setPanel('code'); notice('Saved work restored — press Run.'); }, value => value.files.map(file => file.name + '\n' + file.text).join('\n\n'));
 window.pagesApp = {getProject:snapshot,setProject,preview,store,get editor(){return editor;},run};
 $('run').onclick = run; $('reload').onclick = run; $('view-run').onclick = run;
 $('auto-refresh').onchange = event=>setAuto(event.target.checked); $('auto-mobile').onchange = event=>setAuto(event.target.checked); setAuto(auto);
@@ -121,7 +111,7 @@ $('new-project').onchange = event=>{
 $('add-file').onclick = ()=>{ const name = prompt('New file name (for example about.md or scripts/util.js)'); if (!name) return; try { setProject(Project.add(project,name,Project.template(name)),{reset:false}); setPanel('code'); } catch (error) { notice(error.message); } };
 $('file-menu').onclick = fileDialog;
 $('rename-file').onclick = ()=>{ try { setProject(Project.rename(project,project.active,$('file-name').value.trim()),{reset:false}); $('file-dialog').close(); } catch (error) { notice(error.message); } };
-$('entry-file').onclick = ()=>{ project.entry = project.active; persist(); preview.reset(); updateURL(); if (auto) run(); $('file-dialog').close(); };
+$('entry-file').onclick = ()=>{ project.entry = project.active; persist(true); preview.reset(); updateURL(); if (auto) run(); $('file-dialog').close(); };
 $('delete-file').onclick = ()=>{ if (!confirm('Delete ' + project.active + '?')) return; try { setProject(Project.remove(project,project.active)); $('file-dialog').close(); } catch (error) { notice(error.message); } };
 $('open-files').onclick = ()=>$('file-input').click();
 $('file-input').onchange = async event=>{ try { const result = await Export.importFiles(event.target.files,snapshot(),$('replace-import').checked); setProject(result); $('more').open = false; } catch (error) { notice(error.message); } event.target.value = ''; };
@@ -170,11 +160,7 @@ if (!view) {
     editor.commands.addCommand({name:'run-page',bindKey:{win:'Ctrl-Enter',mac:'Command-Enter'},exec:run});
   } catch (_) { fallback = document.createElement('textarea'); fallback.className = 'fallback-editor'; fallback.setAttribute('aria-label','Source editor'); fallback.spellcheck = false; fallback.oninput = changed; $('ace-editor').append(fallback); notice('The code editor could not load. You can keep editing in the text field.'); }
 }
-let restored = false, kept = false, returnedShare = false;
-if (!view) {
-  try { const stored = local?.getItem(key); if (stored) project = Project.validate(JSON.parse(stored)); }
-  catch (_) { notice('The saved project could not be restored. Starting with a fresh page.'); }
-}
+let restored = false, returnedShare = false;
 if (initial.kind === 'publish') {
   const beforeReturn = fingerprint();
   const result = await store.published(location.hash);
@@ -182,7 +168,7 @@ if (initial.kind === 'publish') {
     restored = true; updateURL();
     notice('The HashBin return finished after you edited the project. Your newer edits were kept.');
   } else if (result?.snapshot) {
-    setProject(result.snapshot,{cid:result.cid || null,render:false}); restored = true;
+    setProject(result.snapshot,{cid:result.cid || null,render:false,localEdit:false}); restored = true;
     if (result.share) {
       $('share-mode').value = result.share.view === true ? 'view' : 'editor';
       $('share-no-run').checked = result.share.run === false;
@@ -194,8 +180,8 @@ if (initial.kind === 'publish') {
 }
 if (!restored) {
   try {
-    if (initial.kind === 'source') { if (acceptLink(initial.project)) project = initial.project; else kept = true; }
-    else if (initial.kind === 'example') { const sample = Examples.catalog.find(s=>s.id === initial.id); if (!sample) throw Error('Sample not found. Choose one from the gallery.'); if (acceptLink(Project.validate(sample.project))) project = Project.validate(sample.project); else kept = true; }
+    if (initial.kind === 'source') project = initial.project;
+    else if (initial.kind === 'example') { const sample = Examples.catalog.find(s=>s.id === initial.id); if (!sample) throw Error('Sample not found. Choose one from the gallery.'); project = Project.validate(sample.project); }
     else if (initial.kind === 'invalid') notice('This project link is invalid. Correct the link or open a new project.');
     project = Project.validate(project);
     if (initial.page && project.files.some(f=>f.name === initial.page && Project.PAGE.test(f.name))) preview.page = initial.page;
@@ -205,13 +191,12 @@ if (editor || fallback) selectFile(project.active);
 $('edit-link').href = (()=>{const link = new URL(location.href);link.searchParams.delete('view');return link.href;})();
 if (initial.kind === 'cid' && !restored) {
   // Keep a source revision so a slow CID request cannot replace edits made during loading.
-  linkLoad = true; await panel.load(initial.cid); linkLoad = false;
+  await panel.load(initial.cid);
   if (initial.page && project.files.some(f=>f.name === initial.page && Project.PAGE.test(f.name))) preview.page = initial.page;
   if (auto) run(); else $('view-run').hidden = !view;
 } else if (auto && initial.run !== false) run();
 else $('view-run').hidden = !view;
 persist();
-if (kept) updateURL();
 if (returnedShare) openShare();
 store.retireLegacyTokens().catch(()=>{ /* Retried on the next load. */ });
 window.addEventListener('hashchange',()=>location.reload());

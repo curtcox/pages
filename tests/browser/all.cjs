@@ -100,7 +100,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
   });
   await step('links never silently replace unsaved work; view links never overwrite it',async()=>{
    await fixture({'index.md':'# Unsaved work'});await page.evaluate(()=>dispatchEvent(new Event('beforeunload')));
-   await open('?example=hello',false);assert.equal((await page.evaluate(()=>pagesApp.getProject())).files[0].text,'# Unsaved work');assert.doesNotMatch(page.url(),/example=hello/);
+   await open('?example=hello',false);assert.doesNotMatch(JSON.stringify(await page.evaluate(()=>pagesApp.getProject())),/Unsaved work/);assert.match(await page.evaluate(()=>localStorage.getItem('pagesonline:project')),/Unsaved work/);
    await page.goto(base+'?example=hello&view');await page.waitForFunction(()=>window.pagesApp&&document.querySelector('#preview').getAttribute('src') && pagesApp.preview.pending === null);assert.doesNotMatch(JSON.stringify(await page.evaluate(()=>pagesApp.getProject())),/Unsaved work/);assert.match(await page.evaluate(()=>localStorage.getItem('pagesonline:project')),/Unsaved work/);
    await open('?example=hello');assert.doesNotMatch(JSON.stringify(await page.evaluate(()=>pagesApp.getProject())),/Unsaved work/);await open('?example=modules');assert.ok((await page.evaluate(()=>pagesApp.getProject())).files.some(f=>f.name.endsWith('.js')));
   });
@@ -144,7 +144,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
    await page.locator('#hashbin-load').click();await until(async()=>(await page.evaluate(()=>pagesApp.getProject())).files[0].text==='# Saved from HashBin'&&/Loaded/.test(await page.locator('#hashbin-status').textContent()),'verified CID load');
    await context.unroute('https://256t.us/**');await context.route('https://256t.us/**',route=>route.fulfill({body:payload.replace('Saved from','Forged by'),headers:{'Access-Control-Allow-Origin':'*'}}));
    await page.evaluate(()=>pagesApp.setProject(Project.single('# Kept edit')));await page.locator('#more').evaluate(e=>e.open=true);await page.locator('#hashbin-load').click();await until(async()=>/does not match its CID/.test(await page.locator('#hashbin-status').textContent()),'forged CID rejected');assert.equal((await page.evaluate(()=>pagesApp.getProject())).files[0].text,'# Kept edit');
-   await open('#'+cid('# Tiny CID'),false);assert.equal((await page.evaluate(()=>pagesApp.getProject())).files[0].text,'# Kept edit');
+   await open('#'+cid('# Tiny CID'),false);assert.equal((await page.evaluate(()=>pagesApp.getProject())).files[0].text,'# Tiny CID');assert.match(await page.evaluate(()=>localStorage.getItem('pagesonline:project')),/Kept edit/);
    await open('#'+cid('# Tiny CID'));await until(async()=>await frame().locator('h1').textContent()==='Tiny CID','inline CID');
   });
   await step('crash-safe startup disables automatic execution',async()=>{

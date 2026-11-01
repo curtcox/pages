@@ -43,3 +43,7 @@ The service worker installs a content-versioned complete cache before activation
 ## HashBin configuration
 
 The `hashbin-client-id` meta value contains the registered public Pages Online client ID. This static browser app uses no client secret; never add one to the repository, browser assets, or preview. Redirect URI must be exactly `https://pages.hashbin.page/`. Saves use the pinned SDK's `publish()` (HashBin Publish draws price and approval); never reintroduce OAuth tokens on this shared origin. Upgrade the SDK URL and its published SRI hash together in `src/hashbin.js`; do not replace the integrity-checked module script with a plain import. `publish()` must run synchronously in the click, after `init()`. Redirect saves return as `#hashbin_publish=…` with the project in `clientState`. Links never silently replace stored work, and stale loads/saves cannot overwrite newer edits. Tests mock the SDK and spend no balance; explicitly clear the test store's client ID when exercising the missing-configuration error.
+
+## URL identity and draft recovery
+
+Explicit program, source, example and CID URLs always load their document, independent of browser drafts. Never gate URL loading on a replacement confirmation. The bare homepage opens the default document. Preserve local drafts separately with LocalDrafts and offer Resume saved work. Opening or running a URL must not overwrite saved work; edits retain the previous draft for recovery. Keep stale-load guards and execution isolation.
