@@ -1,28 +1,7 @@
-(() => {
-'use strict';
-const search = document.getElementById('search'), tags = document.getElementById('tags'), cards = document.getElementById('gallery-cards');
-let selected = 'All';
-function draw() {
-  cards.replaceChildren();
-  const query = search.value.toLowerCase().trim();
-  const items = Examples.catalog.filter(sample=>(selected === 'All' || sample.tags.includes(selected)) && [sample.title,sample.description,...sample.tags].join(' ').toLowerCase().includes(query));
-  document.getElementById('gallery-count').textContent = `${items.length} starting point${items.length === 1 ? '' : 's'}`;
-  for (const sample of items) {
-    const card = document.createElement('article'); card.className = 'gallery-card';
-    const imageLink = document.createElement('a'); imageLink.href = './?example='+sample.id; imageLink.tabIndex = -1; imageLink.setAttribute('aria-hidden','true');
-    const image = document.createElement('img'); image.src = 'gallery/previews/'+sample.id+'.png'; image.alt = ''; image.width = 480; image.height = 270; image.loading = 'lazy'; imageLink.append(image);
-    const content = document.createElement('div'); content.className = 'card-content';
-    const label = document.createElement('p'); label.className = 'card-tag'; label.textContent = sample.tags.join(' / ');
-    const title = document.createElement('h2'); title.textContent = sample.title;
-    const description = document.createElement('p'); description.textContent = sample.description;
-    const actions = document.createElement('div'); actions.className = 'card-actions';
-    for (const [text,href] of [['Load in editor →','./?example='+sample.id],['View page ↗','./?example='+sample.id+'&view'],['MDN ↗',sample.mdn]]) {
-      const link = document.createElement('a'); link.textContent = text; link.href = href; if (text !== 'Load in editor →') { link.target = '_blank'; link.rel = 'noopener'; } actions.append(link);
-    }
-    content.append(label,title,description,actions); card.append(imageLink,content); cards.append(card);
-  }
-  for (const button of tags.children) button.setAttribute('aria-pressed',String(button.textContent === selected));
-}
-for (const tag of ['All',...new Set(Examples.catalog.flatMap(s=>s.tags))]) { const button = document.createElement('button'); button.textContent = tag; button.onclick = ()=>{selected = tag;draw();}; tags.append(button); }
-search.oninput = draw; draw();
-})();
+import {mountGallery} from '../vendor/fragment-kit-v0.3.3/src/index.js';
+import {urlState} from './fragment-config.mjs';
+const container=document.getElementById('gallery-cards'),samples=Examples.catalog;
+mountGallery({container,urlState:{build:doc=>urlState.build(doc,{url:new URL('./',location.href).href,view:false})},catalog:samples.map(sample=>({id:sample.id,title:sample.title,tags:sample.tags,description:sample.description,document:{pages:sample.project},cover:'gallery/covers/'+sample.id+'.png'}))});
+container.querySelector('input').id='search';container.querySelector('select').id='tag';container.querySelector('[role=status]').id='gallery-count';
+const grid=container.querySelector('.fk-gallery-grid');function decorate(){for(const card of grid.children){if(card.dataset.pages)continue;const sample=samples.find(sample=>sample.title===card.querySelector('h2').textContent);if(!sample)continue;card.dataset.pages=sample.id;card.id=sample.id;card.classList.add('gallery-card');const view=document.createElement('a');view.textContent='View page ↗';view.href=urlState.build({pages:sample.project},{url:new URL('./',location.href).href,view:true}).href;view.target='_blank';view.rel='noopener noreferrer';const mdn=document.createElement('a');mdn.textContent='MDN ↗';mdn.href=sample.mdn;mdn.target='_blank';mdn.rel='noopener noreferrer';card.append(view,mdn);}}
+new MutationObserver(decorate).observe(grid,{childList:true});decorate();

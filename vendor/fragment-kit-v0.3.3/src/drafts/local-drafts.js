@@ -1,6 +1,5 @@
-/* URL documents and local recovery are independent. Never restore a draft implicitly. */
-(() => {
-class LocalDrafts {
+// Extracted from Gnuplot Online; see vendor/LICENSE-graphvizonline.
+export class LocalDrafts {
   constructor({ storage, key, serialize = JSON.stringify, parse = JSON.parse }) {
     Object.assign(this, { storage, key, serialize, parse }); this.active = false;
   }
@@ -63,5 +62,3 @@ class LocalDrafts {
     dialog.append(title, note, select, preview, restore, close); document.body.append(dialog);
   }
 }
-if (typeof module !== 'undefined') module.exports = LocalDrafts; else globalThis.LocalDrafts = LocalDrafts;
-})();

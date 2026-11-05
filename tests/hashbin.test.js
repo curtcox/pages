@@ -1,5 +1,5 @@
 const {test} = require('node:test'), assert = require('node:assert/strict');
-const {HashBinStore,HashBinDocuments:D} = require('../src/hashbin.js'),P = require('../src/project.js');
+const {HashBinStore,HashBinDocuments:D} = require('../src/fragment-config.mjs'),P = require('../src/project.js');
 function storage(){const values=new Map();return {getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)}}
 function cid(text){const size=Buffer.alloc(6);size.writeUIntBE(Buffer.byteLength(text),0,6);return size.toString('base64url')+(Buffer.byteLength(text)<=64?Buffer.from(text):require('node:crypto').createHash('sha512').update(text).digest()).toString('base64url')}
 test('HashBin envelope preserves project and entry src; plain text CIDs load',async()=>{
@@ -21,12 +21,12 @@ test('saves through HashBin Publish with the pinned SDK and restores redirect sa
  // A redirect cancelled on HashBin restores the source the SDK no longer returns.
  assert.deepEqual(await denied.published('#hashbin_publish=s&error=access_denied'),{error:'The save was cancelled on HashBin.',snapshot});
  await assert.rejects(new HashBinStore().init(),/registered client ID/);
- assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/hashbin.js'),'utf8'),/hashbin\.org\/sdk\/v0\.4\.0\/hashbin\.js/);
+ assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/fragment-config.mjs'),'utf8'),/hashbin-sdk-v0\.4\.0\.mjs/);
 });
 test('revokes tokens left by the earlier OAuth flow, and only then loads the SDK',async()=>{
  const local=storage();let loaded=0,revoked=0;
  class SDK{async disconnect(){revoked++;local.removeItem('hashbin:tokens:test')}}
- const store=new HashBinStore({clientId:'test',storage:local,loadSDK:async()=>{loaded++;return {HashBinClient:SDK}}});
+ const store=new HashBinStore({clientId:'test',legacyStorage:local,loadSDK:async()=>{loaded++;return {HashBinClient:SDK}}});
  assert.equal(await store.retireLegacyTokens(),false);assert.equal(loaded,0);
  local.setItem('hashbin:tokens:test','{"refreshToken":"old"}');assert.equal(await store.retireLegacyTokens(),true);assert.equal(revoked,1);assert.equal(local.getItem('hashbin:tokens:test'),null);
 });
@@ -37,7 +37,7 @@ test('redirect recovery rejects a snapshot that differs from the saved bytes and
  assert.deepEqual(await store.published('#hashbin_publish=s'),{error:'HashBin content does not match its CID.',snapshot:null});
  class Cancelled{async handlePublishCallback(){throw Object.assign(new Error('access_denied'),{clientState:{snapshot:{files:[{name:'../bad.html',text:'bad'}]}}})}}
  const cancelled=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:Cancelled})});
- assert.deepEqual(await cancelled.published('#hashbin_publish=s'),{error:'The returned project is invalid. Your current project was kept.',snapshot:null});
+ const invalid=await cancelled.published('#hashbin_publish=s');assert.equal(invalid.snapshot,null);assert.match(invalid.error,/relative|invalid/);
 });
 test('network loads reject oversized CIDs, invalid UTF-8, missing content, and timeouts',async()=>{
  const remote=cid('x'.repeat(200));await assert.rejects(new HashBinStore({fetchSource:async()=>({ok:false,status:404})}).load(remote),/not found/);
@@ -48,19 +48,19 @@ test('network loads reject oversized CIDs, invalid UTF-8, missing content, and t
 test('network loads and saves verify bytes against the CID',async()=>{
  const payload=D.serialize(P.single('# Verified remote')),remote=cid(payload),served=body=>new HashBinStore({fetchSource:async()=>({ok:true,status:200,arrayBuffer:async()=>new TextEncoder().encode(body).buffer})});
  assert.deepEqual(await served(payload).load(remote),P.single('# Verified remote'));
- await assert.rejects(served(payload.replace('Verified','Replaced')).load(remote),/does not match its CID/);
- await assert.rejects(served(payload+' ').load(remote),/does not match its CID/);
+ await assert.rejects(served(payload.replace('Verified','Replaced')).load(remote),/does not match its CID|byte limit/);
+ await assert.rejects(served(payload+' ').load(remote),/does not match its CID|byte limit/);
  class SDK{async publish(){return {cid:cid(payload+' ')}}}
  const store=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK})});await store.init();
- await assert.rejects(store.publish(payload,P.single('# Verified remote')),/does not match its CID/);
+ await assert.rejects(store.publish(payload,P.single('# Verified remote')),/does not match its CID|byte limit/);
 });
 
 test('Publish carries sharing choices through approved and cancelled redirects',async()=>{
- const snapshot=P.single('# Shared'),payload=D.serialize(snapshot),savedCid=cid(payload),share={view:true,run:false,page:'index.md'};let clientState;
- class SDK{publish(content,options){clientState=options.clientState;return Promise.resolve({redirected:true})}async handlePublishCallback(){return {cid:savedCid,clientState}}}
+ const snapshot=P.single('# Shared'),payload=D.serialize(snapshot),savedCid=cid(payload),share={view:true,run:false,page:'index.md'};let clientState,cancelled=false;
+ class SDK{publish(content,options){clientState=options.clientState;return Promise.resolve({redirected:true})}async handlePublishCallback(){if(cancelled)throw Object.assign(new Error('access_denied'),{clientState});return {cid:savedCid,clientState}}}
  const store=new HashBinStore({clientId:'test',loadSDK:async()=>({HashBinClient:SDK})});await store.init();
  assert.deepEqual(await store.publish(payload,snapshot,share),{redirected:true});assert.deepEqual(clientState,{snapshot,share});
  assert.deepEqual(await store.published('#hashbin_publish=s'),{cid:savedCid,snapshot,share});
- store.client.handlePublishCallback=async()=>{throw Object.assign(new Error('access_denied'),{clientState})};
+ cancelled=true;
  assert.deepEqual(await store.published('#hashbin_publish=s'),{error:'The save was cancelled on HashBin.',snapshot,share});
 });

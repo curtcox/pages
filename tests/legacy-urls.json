@@ -1,0 +1,395 @@
+{
+  "repo": "pages",
+  "slug": "pages",
+  "commit": "9570af93a3bba13252238866271d61063651e822",
+  "example": {
+    "id": "clock",
+    "source": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Here, now</title>\n<link rel=\"stylesheet\" href=\"style.css\">\n\n</head>\n<body>\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\"date\"></p></main>\n<script src=\"script.js\"></script>\n</body>\n</html>\n",
+    "raw": "{\"format\":\"hashbin-diagram\",\"version\":1,\"type\":\"pages\",\"src\":\"<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width,initial-scale=1\\\">\\n<title>Here, now</title>\\n<link rel=\\\"stylesheet\\\" href=\\\"style.css\\\">\\n\\n</head>\\n<body>\\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\\\"date\\\"></p></main>\\n<script src=\\\"script.js\\\"></script>\\n</body>\\n</html>\\n\",\"pages\":{\"files\":[{\"name\":\"index.html\",\"text\":\"<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width,initial-scale=1\\\">\\n<title>Here, now</title>\\n<link rel=\\\"stylesheet\\\" href=\\\"style.css\\\">\\n\\n</head>\\n<body>\\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\\\"date\\\"></p></main>\\n<script src=\\\"script.js\\\"></script>\\n</body>\\n</html>\\n\"},{\"name\":\"script.js\",\"text\":\"function tick(){const now=new Date();document.querySelector('time').textContent=new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);document.querySelector('#date').textContent=new Intl.DateTimeFormat(undefined,{dateStyle:'full'}).format(now);}tick();setInterval(tick,1000);\\n\"},{\"name\":\"style.css\",\"text\":\":root{font-family:system-ui,sans-serif;color:#243d3b;background:#f7f3e9}*{box-sizing:border-box}body{margin:0;padding:clamp(1.5rem,5vw,4rem)}h1{font-size:clamp(2.5rem,7vw,5rem);letter-spacing:-.06em;line-height:1.05}p{line-height:1.7}button,input{font:inherit;padding:.8rem 1rem;border:1px solid #a8bdb3;border-radius:8px}button{cursor:pointer;background:#236c60;color:white}a{color:#236c60}main{max-width:65rem;margin:auto}\\ntime{font-size:clamp(2.5rem,9vw,7rem);font-variant-numeric:tabular-nums;color:#236c60}\\n\"}],\"entry\":\"index.html\",\"active\":\"index.html\"}}",
+    "expected": {
+      "files": [
+        {
+          "name": "index.html",
+          "text": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Here, now</title>\n<link rel=\"stylesheet\" href=\"style.css\">\n\n</head>\n<body>\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\"date\"></p></main>\n<script src=\"script.js\"></script>\n</body>\n</html>\n"
+        },
+        {
+          "name": "script.js",
+          "text": "function tick(){const now=new Date();document.querySelector('time').textContent=new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);document.querySelector('#date').textContent=new Intl.DateTimeFormat(undefined,{dateStyle:'full'}).format(now);}tick();setInterval(tick,1000);\n"
+        },
+        {
+          "name": "style.css",
+          "text": ":root{font-family:system-ui,sans-serif;color:#243d3b;background:#f7f3e9}*{box-sizing:border-box}body{margin:0;padding:clamp(1.5rem,5vw,4rem)}h1{font-size:clamp(2.5rem,7vw,5rem);letter-spacing:-.06em;line-height:1.05}p{line-height:1.7}button,input{font:inherit;padding:.8rem 1rem;border:1px solid #a8bdb3;border-radius:8px}button{cursor:pointer;background:#236c60;color:white}a{color:#236c60}main{max-width:65rem;margin:auto}\ntime{font-size:clamp(2.5rem,9vw,7rem);font-variant-numeric:tabular-nums;color:#236c60}\n"
+        }
+      ],
+      "entry": "index.html",
+      "active": "index.html"
+    }
+  },
+  "sourceFiles": {
+    "README.md": "8c317d6f68a504a41fd4a59039cb84627ade54d1f00dbd91d393e52552f7726b",
+    "index.html": "39c42e65e92d10f9b6bd103096fa2f534f19c048512b7c3c5da7d2e82e4cdafc",
+    "offline-assets.js": "cc1ce78c79b841f0f2cf69afd9c7c3342376f875761f1ed0dedf79b61395a66b",
+    "service-worker.js": "c375a633401ca7f52331634857b94abf33b9311b2d84478494fe71bc574ea751",
+    "src/app.js": "e1ecb55a1c777966dd9e09a9a968036fa9bf5cdf97c8e74439e2e0b27826e79c",
+    "src/bundler.js": "eda7012b73d7cd4e4873830644d4aac04151d5dda22714f2803c3e4a498507cb",
+    "src/console-view.js": "f76ceb094c4dbc1b7e83b35490d30e102990d10cb6bfac8fe7829ed55227fb91",
+    "src/domain-migration.js": "220464e56996e52965418130af0ce95b5a49a54a44241d76b07888a21e6b5cda",
+    "src/examples.js": "f0a7666e87282538b27d318a8f2a529d9362072e7d6563d77070b98cb268e91d",
+    "src/export.js": "3cba1e8c83d1d78a48852250a88742f9f63ffe9e0c39ac172c4c5d382cd08d94",
+    "src/gallery.js": "22d51b63716ff56bc7ae2714bf16acf311019c4ed428b1646b31bc6b3749728f",
+    "src/hashbin-panel.js": "0cedda05582a3f03b4dbfb37f2900092c827cbf413e47a6f53dcb221310b8657",
+    "src/hashbin.js": "38a7efc0c5bd4fb45d89d047961213411e4091f5d19f0fe6c97027163b2e0470",
+    "src/local-drafts.js": "63b3e2ab8ad18a3088ff40386bb64e3a2d133ae32fbc7968a662b9069023cb85",
+    "src/loop-guard.js": "beaea101665d50e761847c1329fb887e8eaa56a330f9d05438ea316a5b3cf815",
+    "src/markdown.js": "ec92ff4f13f269c497f8dd00aa82dbd0176db9de92b6f11a3c448a1809f1087a",
+    "src/offline.js": "208bf7c711b8937db5a84c34cb11908bfd994ea201657aae1f7a35ddcb48eaac",
+    "src/preview-host.js": "5d67acd3ece6d507c4983e6f3445ac5a59cbe9560fbfd487902bd8e0c41316ec",
+    "src/preview-runtime.js": "42a865d19b6cd78fc71e74fdb7112c38657f185248a150eebd64feb875b34a49",
+    "src/preview.js": "1abb1455538bf7e23b938f600d1f1666ada0b53dc1f41fc836dea7a86341e369",
+    "src/project.js": "7cc1939c0072b276d3fc047d272a65d4abfef617465a729633f4911d37d2160e",
+    "src/qr.js": "a6821da15236196ed734bc65c81ad0ddc03ef363e3b61dd7f550335114961921",
+    "src/render-scheduler.js": "2ca91d13be1f761a79427318a6096cfb55f6b15954d67047704e12c824e253a1",
+    "src/share-links.js": "fbadb54262e27efcc307c0ba4cc60edb3eb0988987c5d8aa2d94830f3110535d",
+    "src/view-mode.js": "27ade0379fb1a6df0b4d7f94f343b99e35a27b13cfe8476700a43b6fc28cacb2",
+    "src/zip.js": "4892f19b78f5d506a5267408916cd8879300579c18595c5dd80436c629e4290e",
+    "tests/browser/all.cjs": "1408cdec223130684e08ca2e5c44ac48f33c21ec64cb10004a647161e993137d",
+    "tests/browser/url-state.cjs": "4d6357c0b5e082304be8941171b47331206aabf4eb2ca9bf643aa3d895f882e9",
+    "tests/bundler.test.js": "054251f83e243834095095532d7fcb4181dedcbaaa6eb7af5d61e28e27ee1d13",
+    "tests/drafts.test.js": "d2acc84e28686018a2edda76f28e0167f219dfa031478b2472ed04b0c6e7e74f",
+    "tests/generated.test.js": "5e4abc052ad77a71c744ddc1e827401c7630d40191f65bc94365c7145f99eea7",
+    "tests/hashbin.test.js": "ee05eeba3e6cb2dfd844d0c79b08cfa40870ccec2bd3f7317bda826d5e326983",
+    "tests/loop-guard.test.js": "1e30a05adb6d050a83370b89c375faa3361bdaccb5f95cd89a484351f182533e",
+    "tests/project.test.js": "5c3a8d6bd5f64e48a08601b790dcae2fb08386f9a3944a97d85c310bf0d354c4",
+    "tests/qr.test.js": "29088fb4afec2de59e1840620bcf791efb3e252cc29ff0bb9d0bb9f561d77dd1",
+    "tests/render-scheduler.test.js": "ceb450e802fcae89074e0526e05042d6ea6be580f360ec95c4ed69284b2c2537",
+    "tests/share-links.test.js": "1839ae861516f9bb1eaabb0b4ca58f62d5883f324deb2703c4c4e1d89170f07d",
+    "tests/zip.test.js": "66ad93325141fc5390f7a779c56161aab885db9c8a8af05f852f418695210221"
+  },
+  "storage": [
+    {
+      "file": "src/domain-migration.js",
+      "key": "pythononline:persistent-home"
+    },
+    {
+      "file": "src/examples.js",
+      "key": "tasks"
+    },
+    {
+      "file": "src/examples.js",
+      "key": "tasks"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test-secret"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test-secret"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test-secret"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test-secret"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "inside"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "inside"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "inside"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "inside"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test-secret"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:project"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:project"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "hashbin:tokens:fixture-client"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:revoked"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "hashbin:tokens:fixture-client"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:publish"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:publish"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:publish"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:publish"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:publish"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:delay-callback"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:test:publish"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:project"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:rendering"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:rendering"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "pagesonline:rendering"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "preview-secret"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "key": "preview-secret"
+    },
+    {
+      "file": "tests/drafts.test.js",
+      "key": "work"
+    },
+    {
+      "file": "tests/drafts.test.js",
+      "key": "work"
+    },
+    {
+      "file": "tests/drafts.test.js",
+      "key": "work"
+    },
+    {
+      "file": "tests/drafts.test.js",
+      "key": "work"
+    }
+  ],
+  "caches": [],
+  "references": [
+    {
+      "file": "README.md",
+      "href": "https://curtcox.github.io/pages/gallery.html)**"
+    },
+    {
+      "file": "README.md",
+      "href": "https://curtcox.github.io/pages/?example=guide&view)**"
+    },
+    {
+      "file": "index.html",
+      "href": "./?example=guide&view"
+    },
+    {
+      "file": "index.html",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/HTML"
+    },
+    {
+      "file": "index.html",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/CSS"
+    },
+    {
+      "file": "index.html",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
+    },
+    {
+      "file": "src/domain-migration.js",
+      "href": "https://hashbin.org/docs/textpad/app"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Form_validation"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/HTML"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Howto/Markdown_in_MDN"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_animations"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/HTML"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/SVG"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme"
+    },
+    {
+      "file": "src/examples.js",
+      "href": "https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "href": "?example=modules"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "href": "?example=hello"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "href": "?example=hello&view"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "href": "?example=hello"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "href": "?example=modules"
+    },
+    {
+      "file": "tests/browser/all.cjs",
+      "href": "?example=hello"
+    },
+    {
+      "file": "tests/share-links.test.js",
+      "href": "https://curtcox.github.io/pages/?example=hello#old"
+    },
+    {
+      "file": "tests/share-links.test.js",
+      "href": "https://a/?example=hello&view&run=0"
+    },
+    {
+      "file": "tests/share-links.test.js",
+      "href": "https://a/?doc=invalid"
+    },
+    {
+      "file": "tests/share-links.test.js",
+      "href": "https://a/?doc=abc"
+    },
+    {
+      "file": "tests/share-links.test.js",
+      "href": "https://a/?doc=abc"
+    }
+  ],
+  "cases": [
+    {
+      "label": "source fragment",
+      "href": "https://curtcox.github.io/pages/#%3C!doctype%20html%3E%0A%3Chtml%20lang%3D%22en%22%3E%0A%3Chead%3E%0A%3Cmeta%20charset%3D%22utf-8%22%3E%0A%3Cmeta%20name%3D%22viewport%22%20content%3D%22width%3Ddevice-width%2Cinitial-scale%3D1%22%3E%0A%3Ctitle%3EHere%2C%20now%3C%2Ftitle%3E%0A%3Clink%20rel%3D%22stylesheet%22%20href%3D%22style.css%22%3E%0A%0A%3C%2Fhead%3E%0A%3Cbody%3E%0A%3Cmain%3E%3Cp%3ENO%20TIME%20LIKE%20THE%20PRESENT%3C%2Fp%3E%3Ch1%3EHere%2C%20now.%3C%2Fh1%3E%3Ctime%3E%3C%2Ftime%3E%3Cp%20id%3D%22date%22%3E%3C%2Fp%3E%3C%2Fmain%3E%0A%3Cscript%20src%3D%22script.js%22%3E%3C%2Fscript%3E%0A%3C%2Fbody%3E%0A%3C%2Fhtml%3E%0A",
+      "kind": "source",
+      "src": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Here, now</title>\n<link rel=\"stylesheet\" href=\"style.css\">\n\n</head>\n<body>\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\"date\"></p></main>\n<script src=\"script.js\"></script>\n</body>\n</html>\n"
+    },
+    {
+      "label": "compressed query",
+      "href": "https://curtcox.github.io/pages/?compressed=DwQgJg9gxgLgngBwKYAIAWMC2AbAfAKGAxxWwEMA7AcwF4AiJCugopMsFzJGMlKNMgCcAzt3oBXGADMAtAA5mhLjxQUyXegDcAlkgDuCCIJh0+ECjEYx6e7WBhoaYJDqhIZt+2gA02itphtMmwZYShgpBoARkVgQJhsJFwACSRBJG9VCD1gAHp4xJZsPwBrFHTsemF4ROE0JG5TNHSpKpqkADooYWFFQlz69hYAIwgwOE4yP1xgBFwAOQB5FAAVAEkAWQBRFAAZNYBpHZXknYAFACUtgGUt+ZW8uaIolLSMrL0OvLQXuO0uGb5f5JWYoOz0MBkSzMR6AzBTCgsMKCbQIGAoYSCKBVKAotEdABWvUByNRMBYuVG4wpxDw+CAA",
+      "kind": "source",
+      "src": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Here, now</title>\n<link rel=\"stylesheet\" href=\"style.css\">\n\n</head>\n<body>\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\"date\"></p></main>\n<script src=\"script.js\"></script>\n</body>\n</html>\n"
+    },
+    {
+      "label": "document query",
+      "href": "https://curtcox.github.io/pages/?doc=N4IgZg9gTgtghgFxALhACzgZzQIwJYB2AtACZ5wDmUcMIANCAG4CmUmeEBKAjAwgJ4AHZihCDKzTPRCYoAY1EAeAIQkIcgcIAEaBDAA2APgA6BRboNb9cAhQC8xkMwKOTZtMzgk3imMwRwWnIYbP4OIACuCGBEAByupr7+gQQ0zOGMeMwA7oLQCI5BnAjOCOHZeCQIaHYkzJlyzEQVVWh0hHgI5PpEmHJw+uncCWZdCIOGABKszHRaBBDZigD0YxOJ+oQA1lpQzPrhmAKD2Mz+hWh7YIfHzAB0cpiYI4nLHl4+OBAk-D7whIZFIJDAA5ADyWgAKgBJACyAFEtAAZaEAaURkMmiIACgAleEAZXhIMhK2B5m4UxmcwW2TuKzQlMUXT8gNWeFZQK0lXCJEQzFcZLZ-wIPj6UDwggQWlkckOcglUruACtniA2eLJQgfMsvj8dRYjKZpOIKJIUKAwHgTigANqgVJ+USEOoADzuhukJVdSFQKjUGiEzB0eiN7lDVhs9kczhG5k83kSfgCQRCmDCjiiMXi6qTyXmaQyWVy+UKcmKpXKlWqtXqeEazWrbQ6XQGvX6gzsw1zo06E2mexpixWa2YPk2BB2ewOjiO-BOHnOIB0Vxu8-ujzVble70TZj1vyTcABQNBEJhCORaIxWK0eMJxNJy3JjKpg-mi3pbyZLLHI45f6CNyJC8vygrPsKx6iokmpSjK8jyoqCAqluKywdqrwHgaoZuCAAC+dAOmkojoShXrMD6ohgBEBAaBwBBaF0chbAAFAAlMA5YEEcH7ZHYBA5FoAAi-LsQA3AGER+AQyEAI4RKw-AEvszAaNALEAOS-hpbF3N6CAAMIVjJ-GCdCMn6HcIklJCAEAGLQPACAsTRdRWgJJCEWgEARFAyAaQATKQeAUJ0Gl0DAhBRMw-lBWQoUIOF6ZcSQsXBQlGl4bpkCwIgLG0mxEnqFJpR3PJinKYMalQJpADEfIlDpekUYZxllAJ2RaOZ4xWfytl+A5uXOa5zDucwnnAA1zAErc-nUfo+iZdljl5QVYl4UxrGFemCDdawjADCxm10NwAAM52FcaBFEU6qBzoMDxPORlGoMgUAQBACDAJAMlEGANDWvwyCYPwRzMDARARHgdCYDYmC9KweBgGJ5b6NAyC1QFAAsADMJA4zgYk4HAzFUD5BCpbVYAAOxgDjzAAJx4QAVMAXyur0eAAF6EBQyBfFAdRQEQ7N4QewDwFAoUEMgp1ieIJBkLYyByNYMCCCx3B3AArHsMB0NrjDZHQWN62xeGMt9xSc1zMWqzQGsBTret0NTRsG2bYmDAgJTC5g4hyLzyBEHcp0AGzg17hBNB4IW6MgWundreGCMAE4x8wccIAndzU2LUQIJw7QEIIURWzJyCEB4EoIPLXhK3zdyxHrWjcHrRPQELCeCK6MoQJsJBaLVcCxDgJA4DjHeC6wRDUGQESYMgsQ9-nPucJxvmYOjeSEL7RMk1sZOuRjAU42Hchh3LqPo9kaCdMweFwJx-fo5jZ8X6deEihLcAcy01TIDDrrSOktpbIDgFECAeFTC-nLggG2ds1aO2duDOgDN3bU09j9eBB0JQ2HgQQEqEo5DIACDgCI1hhaEJgJgFGL8-Jv3PpfaBXA8IAF0GClCgPwZ0FMKIelDNIEmXQWC8LdAIgw+E8JAA",
+      "kind": "source",
+      "raw": "{\"format\":\"hashbin-diagram\",\"version\":1,\"type\":\"pages\",\"src\":\"<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width,initial-scale=1\\\">\\n<title>Here, now</title>\\n<link rel=\\\"stylesheet\\\" href=\\\"style.css\\\">\\n\\n</head>\\n<body>\\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\\\"date\\\"></p></main>\\n<script src=\\\"script.js\\\"></script>\\n</body>\\n</html>\\n\",\"pages\":{\"files\":[{\"name\":\"index.html\",\"text\":\"<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width,initial-scale=1\\\">\\n<title>Here, now</title>\\n<link rel=\\\"stylesheet\\\" href=\\\"style.css\\\">\\n\\n</head>\\n<body>\\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\\\"date\\\"></p></main>\\n<script src=\\\"script.js\\\"></script>\\n</body>\\n</html>\\n\"},{\"name\":\"script.js\",\"text\":\"function tick(){const now=new Date();document.querySelector('time').textContent=new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);document.querySelector('#date').textContent=new Intl.DateTimeFormat(undefined,{dateStyle:'full'}).format(now);}tick();setInterval(tick,1000);\\n\"},{\"name\":\"style.css\",\"text\":\":root{font-family:system-ui,sans-serif;color:#243d3b;background:#f7f3e9}*{box-sizing:border-box}body{margin:0;padding:clamp(1.5rem,5vw,4rem)}h1{font-size:clamp(2.5rem,7vw,5rem);letter-spacing:-.06em;line-height:1.05}p{line-height:1.7}button,input{font:inherit;padding:.8rem 1rem;border:1px solid #a8bdb3;border-radius:8px}button{cursor:pointer;background:#236c60;color:white}a{color:#236c60}main{max-width:65rem;margin:auto}\\ntime{font-size:clamp(2.5rem,9vw,7rem);font-variant-numeric:tabular-nums;color:#236c60}\\n\"}],\"entry\":\"index.html\",\"active\":\"index.html\"}}"
+    },
+    {
+      "label": "document fragment",
+      "href": "https://curtcox.github.io/pages/#%7B%22format%22%3A%22hashbin-diagram%22%2C%22version%22%3A1%2C%22type%22%3A%22pages%22%2C%22src%22%3A%22%3C!doctype%20html%3E%5Cn%3Chtml%20lang%3D%5C%22en%5C%22%3E%5Cn%3Chead%3E%5Cn%3Cmeta%20charset%3D%5C%22utf-8%5C%22%3E%5Cn%3Cmeta%20name%3D%5C%22viewport%5C%22%20content%3D%5C%22width%3Ddevice-width%2Cinitial-scale%3D1%5C%22%3E%5Cn%3Ctitle%3EHere%2C%20now%3C%2Ftitle%3E%5Cn%3Clink%20rel%3D%5C%22stylesheet%5C%22%20href%3D%5C%22style.css%5C%22%3E%5Cn%5Cn%3C%2Fhead%3E%5Cn%3Cbody%3E%5Cn%3Cmain%3E%3Cp%3ENO%20TIME%20LIKE%20THE%20PRESENT%3C%2Fp%3E%3Ch1%3EHere%2C%20now.%3C%2Fh1%3E%3Ctime%3E%3C%2Ftime%3E%3Cp%20id%3D%5C%22date%5C%22%3E%3C%2Fp%3E%3C%2Fmain%3E%5Cn%3Cscript%20src%3D%5C%22script.js%5C%22%3E%3C%2Fscript%3E%5Cn%3C%2Fbody%3E%5Cn%3C%2Fhtml%3E%5Cn%22%2C%22pages%22%3A%7B%22files%22%3A%5B%7B%22name%22%3A%22index.html%22%2C%22text%22%3A%22%3C!doctype%20html%3E%5Cn%3Chtml%20lang%3D%5C%22en%5C%22%3E%5Cn%3Chead%3E%5Cn%3Cmeta%20charset%3D%5C%22utf-8%5C%22%3E%5Cn%3Cmeta%20name%3D%5C%22viewport%5C%22%20content%3D%5C%22width%3Ddevice-width%2Cinitial-scale%3D1%5C%22%3E%5Cn%3Ctitle%3EHere%2C%20now%3C%2Ftitle%3E%5Cn%3Clink%20rel%3D%5C%22stylesheet%5C%22%20href%3D%5C%22style.css%5C%22%3E%5Cn%5Cn%3C%2Fhead%3E%5Cn%3Cbody%3E%5Cn%3Cmain%3E%3Cp%3ENO%20TIME%20LIKE%20THE%20PRESENT%3C%2Fp%3E%3Ch1%3EHere%2C%20now.%3C%2Fh1%3E%3Ctime%3E%3C%2Ftime%3E%3Cp%20id%3D%5C%22date%5C%22%3E%3C%2Fp%3E%3C%2Fmain%3E%5Cn%3Cscript%20src%3D%5C%22script.js%5C%22%3E%3C%2Fscript%3E%5Cn%3C%2Fbody%3E%5Cn%3C%2Fhtml%3E%5Cn%22%7D%2C%7B%22name%22%3A%22script.js%22%2C%22text%22%3A%22function%20tick()%7Bconst%20now%3Dnew%20Date()%3Bdocument.querySelector('time').textContent%3Dnew%20Intl.DateTimeFormat(undefined%2C%7Bhour%3A'2-digit'%2Cminute%3A'2-digit'%2Csecond%3A'2-digit'%7D).format(now)%3Bdocument.querySelector('%23date').textContent%3Dnew%20Intl.DateTimeFormat(undefined%2C%7BdateStyle%3A'full'%7D).format(now)%3B%7Dtick()%3BsetInterval(tick%2C1000)%3B%5Cn%22%7D%2C%7B%22name%22%3A%22style.css%22%2C%22text%22%3A%22%3Aroot%7Bfont-family%3Asystem-ui%2Csans-serif%3Bcolor%3A%23243d3b%3Bbackground%3A%23f7f3e9%7D*%7Bbox-sizing%3Aborder-box%7Dbody%7Bmargin%3A0%3Bpadding%3Aclamp(1.5rem%2C5vw%2C4rem)%7Dh1%7Bfont-size%3Aclamp(2.5rem%2C7vw%2C5rem)%3Bletter-spacing%3A-.06em%3Bline-height%3A1.05%7Dp%7Bline-height%3A1.7%7Dbutton%2Cinput%7Bfont%3Ainherit%3Bpadding%3A.8rem%201rem%3Bborder%3A1px%20solid%20%23a8bdb3%3Bborder-radius%3A8px%7Dbutton%7Bcursor%3Apointer%3Bbackground%3A%23236c60%3Bcolor%3Awhite%7Da%7Bcolor%3A%23236c60%7Dmain%7Bmax-width%3A65rem%3Bmargin%3Aauto%7D%5Cntime%7Bfont-size%3Aclamp(2.5rem%2C9vw%2C7rem)%3Bfont-variant-numeric%3Atabular-nums%3Bcolor%3A%23236c60%7D%5Cn%22%7D%5D%2C%22entry%22%3A%22index.html%22%2C%22active%22%3A%22index.html%22%7D%7D",
+      "kind": "source",
+      "raw": "{\"format\":\"hashbin-diagram\",\"version\":1,\"type\":\"pages\",\"src\":\"<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width,initial-scale=1\\\">\\n<title>Here, now</title>\\n<link rel=\\\"stylesheet\\\" href=\\\"style.css\\\">\\n\\n</head>\\n<body>\\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\\\"date\\\"></p></main>\\n<script src=\\\"script.js\\\"></script>\\n</body>\\n</html>\\n\",\"pages\":{\"files\":[{\"name\":\"index.html\",\"text\":\"<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width,initial-scale=1\\\">\\n<title>Here, now</title>\\n<link rel=\\\"stylesheet\\\" href=\\\"style.css\\\">\\n\\n</head>\\n<body>\\n<main><p>NO TIME LIKE THE PRESENT</p><h1>Here, now.</h1><time></time><p id=\\\"date\\\"></p></main>\\n<script src=\\\"script.js\\\"></script>\\n</body>\\n</html>\\n\"},{\"name\":\"script.js\",\"text\":\"function tick(){const now=new Date();document.querySelector('time').textContent=new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);document.querySelector('#date').textContent=new Intl.DateTimeFormat(undefined,{dateStyle:'full'}).format(now);}tick();setInterval(tick,1000);\\n\"},{\"name\":\"style.css\",\"text\":\":root{font-family:system-ui,sans-serif;color:#243d3b;background:#f7f3e9}*{box-sizing:border-box}body{margin:0;padding:clamp(1.5rem,5vw,4rem)}h1{font-size:clamp(2.5rem,7vw,5rem);letter-spacing:-.06em;line-height:1.05}p{line-height:1.7}button,input{font:inherit;padding:.8rem 1rem;border:1px solid #a8bdb3;border-radius:8px}button{cursor:pointer;background:#236c60;color:white}a{color:#236c60}main{max-width:65rem;margin:auto}\\ntime{font-size:clamp(2.5rem,9vw,7rem);font-variant-numeric:tabular-nums;color:#236c60}\\n\"}],\"entry\":\"index.html\",\"active\":\"index.html\"}}"
+    },
+    {
+      "label": "example",
+      "href": "https://curtcox.github.io/pages/?example=clock",
+      "kind": "example",
+      "id": "clock"
+    },
+    {
+      "label": "CID",
+      "href": "https://curtcox.github.io/pages/#AAAAAAFlAhpEAzbCE-yUERJVNp0DtNC8-lrQkTnKdzhEUN0u-NE5grV27Z8MX_cWdtYrLPc47KYxpCQ_oN797ynJB4lzWA",
+      "kind": "cid",
+      "cid": "AAAAAAFlAhpEAzbCE-yUERJVNp0DtNC8-lrQkTnKdzhEUN0u-NE5grV27Z8MX_cWdtYrLPc47KYxpCQ_oN797ynJB4lzWA"
+    }
+  ]
+}

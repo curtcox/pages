@@ -288,15 +288,18 @@ const encodeQr = (() => {
     return { version: ver, size, modules };
   }
 
-  return function encodeQr(text) {
+  return function encodeQr(text, options = {}) {
     const data = new TextEncoder().encode(text);
     const usedBits = (ver) => 4 + (ver < 10 ? 8 : 16) + data.length * 8;
-    let ver = 1;
-    while (usedBits(ver) > numDataCodewords(ver, 0) * 8) {
+    const requested = options.ecc === undefined ? null : ['L', 'M', 'Q', 'H'].indexOf(options.ecc);
+    if (requested === -1 || (options.version !== undefined && (!Number.isInteger(options.version) || options.version < 1 || options.version > 40))) throw new Error('Invalid QR version or ECC level.');
+    let ver = options.version ?? 1;
+    while (usedBits(ver) > numDataCodewords(ver, requested ?? 0) * 8) {
+      if (options.version !== undefined) return null;
       if (++ver > 40) return null;
     }
-    let ecl = 0;
-    for (const e of [1, 2, 3]) {
+    let ecl = requested ?? 0;
+    for (const e of requested === null ? [1, 2, 3] : []) {
       if (usedBits(ver) <= numDataCodewords(ver, e) * 8) ecl = e;
     }
 
@@ -332,5 +335,15 @@ function qrNotes(url, qr) {
   else if (qr.version > 20) notes.push('This QR code is dense and may be hard to scan. Save to HashBin for a short link.');
   return notes.join(' ');
 }
-if (typeof module !== 'undefined') module.exports = { encodeQr, qrSvg, qrNotes };
-else Object.assign(globalThis, { encodeQr, qrSvg, qrNotes });
+
+export { encodeQr, qrSvg, qrNotes };
+export function qrPng(qr, scale = 8, document = globalThis.document) {
+  if (!qr || !Number.isInteger(scale) || scale < 1 || scale > 64) throw new Error('Invalid QR image.');
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = (qr.size + 8) * scale;
+  const context = canvas.getContext('2d');
+  context.fillStyle = 'white'; context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'black';
+  qr.modules.forEach((row, y) => row.forEach((dark, x) => { if (dark) context.fillRect((x + 4) * scale, (y + 4) * scale, scale, scale); }));
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('PNG export failed.')), 'image/png'));
+}

@@ -57,6 +57,13 @@ const engine=process.env.BROWSER||'chromium';
    try{return (APP==='pages'?pagesApp.getProject().files.find(file=>file.name===pagesApp.getProject().active).text:APP==='apptron'?ApptronOnline.getSource():ace.edit('editor').getValue())===expected;}catch{return false;}
   },{APP,expected},{timeout:120000});if(APP==='apptron')await page.evaluate(()=>ApptronOnline.initialized);if(APP==='R')await page.waitForFunction(()=>ROnline.client.active.ready&&(!ROnline.client.spare||ROnline.client.spare.ready),null,{timeout:120000});if(APP==='AudioOnline'||APP==='GnuPlotOnline')await page.waitForFunction(()=>/^Rendered/.test(document.getElementById('status').textContent),null,{timeout:120000});if(!['R','GnuPlotOnline'].includes(APP))await page.waitForLoadState('networkidle');};
   for(const url of urls){console.log(APP+': '+(new URL(url).searchParams.has('doc')?'document':new URL(url).hash?'CID':'compressed source'));await page.goto(url);await ready();assert.equal(await getSource(),expected);if(new URL(url).searchParams.has('doc')){if(APP==='R')assert.deepEqual(await page.evaluate(()=>ROnline.snapshot().r),document.r);if(APP==='GnuPlotOnline'){assert.equal(await page.locator('#file-count').innerText(),'1');assert.equal(await page.locator('#width').inputValue(),'640');}if(APP==='AudioOnline')assert.equal(await page.locator('#sample-rate').inputValue(),'22050');}await page.reload();await ready();assert.equal(await page.evaluate(key=>localStorage.getItem(key),key),raw);}
+  // Back/forward navigation must restore the linked project after later edits.
+  if(old===null){
+   await page.evaluate(href=>{history.pushState(null,'',href);dispatchEvent(new PopStateEvent('popstate'));},base+'?run=0#'+encodeURIComponent(source('History')));
+   await page.waitForFunction(()=>pagesApp.getProject().files[0].text.includes('History'));
+   await page.evaluate(()=>pagesApp.editor.setValue('<h1>Edited history</h1>',-1));await page.waitForTimeout(400);
+   await page.goBack();await ready();assert.equal(await getSource(),expected);
+  }
   // A same-document link must also win over edits in this tab.
   await page.evaluate(({APP,text})=>{if(APP==='pages')pagesApp.editor.setValue(text,-1);else if(APP==='apptron')ApptronOnline.editor.setValue(text,-1);else ace.edit('editor').setValue(text,-1);},{APP,text:source('Current')});
   if(APP==='livelier')await page.evaluate(()=>LivelierApp.saveDraft());

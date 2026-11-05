@@ -1,0 +1,5 @@
+{
+  "slug":"pages","name":"Pages Online","storagePrefix":"pagesonline",
+  "canonicalOrigin":"https://pages.hashbin.page/","recoveryOrigin":"https://curtcox.github.io/pages/",
+  "repo":"curtcox/pages","docs":"https://curtcox.github.io/pages/docs/","gallery":"https://curtcox.github.io/pages/gallery.html","documentType":"pages"
+}
