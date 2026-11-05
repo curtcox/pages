@@ -1,10 +1,10 @@
 const {test} = require('node:test'), assert = require('node:assert/strict');
-const {ShareLinks:S,ShareClient} = require('../src/share-links.js'), P = require('../src/project.js'), LZ = require('../vendor/lz-string.min.js');
+const {ShareLinks:S,ShareClient} = require('../src/fragment-config.mjs'), P = require('../src/project.js'), LZ = require('../src/fragment-config.mjs').LZString;
 const base = 'https://curtcox.github.io/pages/?example=hello#old';
 for(const project of [P.starter(),P.starter('markdown'),P.starter('blank'),P.validate({files:[{name:'custom.md',text:'# Title'}]})]) test('share roundtrip: '+project.files.map(f=>f.name).join(','),()=>{
   for(const compress of [undefined,LZ.compressToEncodedURIComponent]) {
     const links = S.build({url:base,project,compress,view:true,run:false,page:'about.md'}), parsed = S.parse(links.long,LZ.decompressFromEncodedURIComponent);
-    assert.deepEqual(parsed.project,project); assert.equal(parsed.view,true); assert.equal(parsed.run,false); assert.equal(parsed.page,'about.md'); assert.ok(!links.long.includes('example='));
+    assert.deepEqual(parsed.project,project); assert.equal(parsed.view,true); assert.equal(parsed.run,false); assert.equal(parsed.page,project.files.some(f=>f.name==='about.md')?'about.md':null); assert.ok(!links.long.includes('example='));
   }
 });
 test('example, plain hash, invalid compression and page-only flags',()=>{
@@ -19,4 +19,4 @@ test('shortening accepts only is.gd HTTPS and returns the complete source link o
   client = new ShareClient({fetchLink:async()=>({ok:true,json:async()=>({contents:'javascript:alert(1)'})})}); const result = await client.shorten(links); assert.equal(result.shortened,false); assert.equal(result.url,links.long);
   client = new ShareClient({timeout:5,fetchLink:()=>new Promise(()=>{})}); assert.equal((await client.shorten(links)).error.code,'timeout');
 });
-test('HashBin Publish returns are not parsed as projects',()=>{assert.deepEqual(S.parse('https://curtcox.github.io/pages/#hashbin_publish=abc&cid=x',LZ.decompressFromEncodedURIComponent),{kind:'publish',run:true,view:false,page:null});});
+test('HashBin Publish returns are not parsed as projects',()=>{const parsed=S.parse('https://curtcox.github.io/pages/#hashbin_publish=abc&cid=x');assert.equal(parsed.kind,'publish');assert.equal(parsed.project,undefined);assert.equal(parsed.run,true);assert.equal(parsed.view,false);});

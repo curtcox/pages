@@ -10,10 +10,17 @@
     "gallery": "node scripts/render-gallery.mjs",
     "offline": "node scripts/update-offline.mjs",
     "serve": "python3 -m http.server 8000",
-    "test:urls": "node tests/browser/url-state.cjs"
+    "test:urls": "node tests/browser/url-state.cjs",
+    "gallery:pages": "node scripts/render-page-previews.mjs",
+    "docs": "node scripts/render-docs.mjs",
+    "test:contracts": "playwright test --config vendor/fragment-kit-v0.3.3/testing/playwright.config.js"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "linkedom": "0.18.14",
     "playwright": "1.64.1"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

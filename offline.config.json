@@ -1,0 +1,26 @@
+{
+  "prefix": "pagesonline",
+  "files": [
+    "index.html",
+    "preview.html",
+    "gallery.html",
+    "icon.svg",
+    "manifest.webmanifest",
+    "service-worker.js",
+    "fragment-kit.config.json",
+    "LICENSE-graphvizonline",
+    "src",
+    "ace",
+    "icons",
+    "docs",
+    "gallery/previews",
+    "gallery/covers",
+    "vendor/marked.min.js",
+    "vendor/acorn.min.js",
+    "vendor/LICENSE-marked",
+    "vendor/LICENSE-acorn",
+    "vendor/LICENSE-lz-string",
+    "vendor/fragment-kit-v0.3.3/src",
+    "vendor/fragment-kit-v0.3.3/vendor"
+  ]
+}

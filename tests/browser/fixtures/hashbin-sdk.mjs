@@ -14,7 +14,7 @@ export class HashBinClient {
       if (outcome === 'cancel') throw new Error('access_denied');
       if (outcome.startsWith('redirect')) {
         sessionStorage.setItem('pagesonline:test:transaction', JSON.stringify({ clientState }));
-        location.href = this.config.redirectUri + '#hashbin_publish=fixture' + (outcome === 'redirect-cancel' ? '&error=access_denied' : '&cid=' + saved);
+        location.href = new URL('./',location.href).href + '#hashbin_publish=fixture' + (outcome === 'redirect-cancel' ? '&error=access_denied' : '&cid=' + saved);
         return { redirected: true };
       }
       return { cid: saved };

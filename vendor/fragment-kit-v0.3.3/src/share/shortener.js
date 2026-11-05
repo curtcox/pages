@@ -1,37 +1,4 @@
-(() => {
-/** Links capture one editor version; shortening is optional and bounded. */
-const HashBinDocuments = typeof module !== 'undefined' ? require('./hashbin.js').HashBinDocuments : globalThis.HashBinDocuments;
-const ShareLinks = {
-  build({ url, project, compress, run = true, view = false, page, cid }) {
-    const link = new URL(url); link.search = ''; link.hash = '';
-    if (!run) link.searchParams.set('run','0');
-    if (view) link.searchParams.set('view','');
-    if (page && page !== project.entry) link.searchParams.set('page',page);
-    if (cid && HashBinDocuments.isCID(cid)) { link.hash = cid; return Object.freeze({ long:link.href,fallback:link.href,plain:link.href }); }
-    const single = project.files.length === 1 && project.files[0].name === (globalThis.Project || require('./project.js')).single(project.files[0].text).entry;
-    const payload = single ? project.files[0].text : HashBinDocuments.serialize(project);
-    link.hash = encodeURIComponent(payload);
-    const plain = link.href;
-    try { const packed = compress?.(payload); if (packed) { link.hash = ''; link.searchParams.set(single ? 'compressed' : 'doc',packed); } } catch (_) {}
-    return Object.freeze({ long:link.href,fallback:link.href,plain });
-  },
-  parse(url, decompress) {
-    const link = new URL(url), params = link.searchParams;
-    const options = { run:params.get('run') !== '0',view:params.has('view'),page:params.get('page') };
-    for (const key of ['doc','compressed']) if (params.has(key)) {
-      const payload = decompress(params.get(key));
-      if (payload == null || (payload === '' && params.get(key))) throw new Error('The shared project could not be decompressed.');
-      return { kind:'source',project:HashBinDocuments.parse(payload),...options };
-    }
-    const hash = link.hash.slice(1);
-    if (new URLSearchParams(hash).has('hashbin_publish')) return {kind:'publish',...options};
-    if (HashBinDocuments.isCID(hash)) return {kind:'cid',cid:hash,...options};
-    if (hash) return {kind:'source',project:HashBinDocuments.parse(decodeURIComponent(hash)),...options};
-    if (params.has('example')) return {kind:'example',id:params.get('example'),...options};
-    return {kind:'empty',...options};
-  }
-};
-
+// Extracted without changing messages; see vendor/LICENSE-graphvizonline.
 class ShareError extends Error {
   constructor(code, message) { super(message); this.code = code; }
 }
@@ -136,7 +103,5 @@ class ShareClient {
     return new ShareError('http', `${service} returned ${code}. ${guidance}`);
   }
 }
-if (typeof module !== 'undefined') module.exports = { ShareLinks, ShareClient };
-else Object.assign(globalThis, { ShareLinks, ShareClient });
 
-})();
+export { ShareError, ShareClient };

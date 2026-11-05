@@ -25,7 +25,7 @@ python3 -m http.server 8000
 
 Open [localhost:8000](http://localhost:8000/). A web server is needed for service workers and browser editor assets; opening `index.html` directly as a file is not supported.
 
-For development and tests, use Node 22 or later and Python 3:
+For development and tests, use Node 22.12 or later and Python 3:
 
 ```sh
 npm ci
@@ -45,6 +45,7 @@ Each `examples/<id>/` directory contains an original project and a `meta.json` w
 
 ```sh
 npm run examples
+npm run gallery:pages
 npm run gallery
 npm run offline
 ```
@@ -55,7 +56,7 @@ npm run offline
 
 **Pages Online** is registered with HashBin, and its public client ID is configured in the `hashbin-client-id` meta tag in `index.html`. Choose **Share**, select **Editor** or **Page only**, then **Save to HashBin**: HashBin Publish shows the size, retention, exact price and your balance, and you approve the save on hashbin.org. The saved link appears in the same Share dialog and follows its destination and **Don’t run on open** choices. This app never holds a HashBin credential. If the popup is blocked, projects up to 512 KiB go through a redirect to the exact return URL **`https://curtcox.github.io/pages/`**, and the project is restored on return. Larger projects require enabling popups and retrying. Cancelled redirect saves restore the project too. The SDK is pinned to `https://hashbin.org/sdk/v0.4.0/hashbin.js` and loaded with the release's published Subresource Integrity hash; a substituted SDK is rejected. Upgrade the URL and integrity hash together using the [SDK release manifest](https://hashbin.org/sdk/v0.4.0/integrity.json). CID loading works without signing in: paste a CID or saved link into **More → HashBin → Load**, or open a `#<cid>` link.
 
-Documents use the sibling apps' `hashbin-diagram` envelope with `type: "pages"`, `src` containing the entry page, and `pages` containing the project. Editing invalidates a saved CID link and restores a complete source link. A link that would replace work kept in this browser asks first.
+Documents use the sibling apps' `hashbin-diagram` envelope with `type: "pages"`, `src` containing the entry page, and `pages` containing the project. Editing invalidates a saved CID link and restores a complete source link. Explicit links open their document while prior drafts remain available for recovery.
 
 The editor's Content Security Policy forbids inline scripts and JavaScript evaluation, and permits scripts only from its own origin and the pinned SDK release. Previews load through `preview.html`, a small trusted host with its own policy. It puts bundled user content in an opaque child frame and relays bounded, source/origin/token-checked messages. User scripts, inline handlers, external libraries, modules and console evaluation run inside that child, without inheriting the editor's script restrictions. The verified offline inventory includes the host and its script.
 
@@ -73,7 +74,7 @@ Loop instrumentation preserves source line numbers; inserted code shifts columns
 
 ## Deployment and credits
 
-Pushes to `main` independently deploy the repository root using GitHub Pages Actions and run unit/generated-file checks plus the Chromium/Firefox/WebKit test matrix.
+Pushes to `main` use the shared, test-gated GitHub Pages workflow. PRs run unit/generated-file checks, independent published-pin verification, shared contracts and the original real-preview suites in Chromium, Firefox and WebKit.
 
 Inspired by GraphvizOnline, [ManimOnline](https://curtcox.github.io/ManimOnline/), [Gnuplot Online](https://curtcox.github.io/GnuplotOnline/), and [Python Online](https://curtcox.github.io/PythonOnline/). GraphvizOnline's license is preserved in `LICENSE-graphvizonline`. Vendored Ace (BSD-3), marked (MIT), acorn (MIT), lz-string (MIT), and Project Nayuki's QR encoder (MIT) retain their licenses. Gallery samples are original; your pages are your own.
 
@@ -86,3 +87,7 @@ The production app is [https://pages.hashbin.page/](https://pages.hashbin.page/)
 ### URLs and saved work
 
 Program URLs always open the linked document, regardless of browser history or local drafts. The homepage opens the default example. Use **Resume saved work** in the editor controls to recover local drafts. Viewing or running a link keeps saved work; editing it retains the previous draft for recovery.
+
+## Fragment Kit migration
+
+Shared tools now use the published v0.3.3 pin: [guide](docs/index.md), [migration notes](docs/fragment-kit-migration.md). Pages retains its project validator, bundler, Markdown, loop guards, console, trusted preview host and opaque user frame. Publish keeps SRI script loading. Its old-client transactions and page/view/run choices remain readable; new transaction keys are prefixed. The original screenshot producer is `gallery:pages`; `gallery` renders shared covers. The native project ZIP/export/import code remains app-owned.

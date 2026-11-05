@@ -1,6 +1,6 @@
 # Pages Online contracts
 
-A buildless, static GitHub Pages editor. Read `todo/master_plan.md` for the design and `README.md` for development. Work directly on `main` and push completed changes as requested in that plan. Deployment and test workflows run independently.
+A buildless, static GitHub Pages editor. Read `todo/master_plan.md` for the design and `README.md` for development. Work directly on `main` and push completed changes as requested in that plan. Shared deployment is gated on the reusable test workflow.
 
 ## Preview isolation
 
@@ -22,15 +22,16 @@ A buildless, static GitHub Pages editor. Read `todo/master_plan.md` for the desi
 
 ## Browser assets and generated files
 
-Plain browser scripts use IIFEs and export via `module.exports`/`globalThis`. No production build step or runtime npm dependencies.
+Shared UI and document adapters use native ES modules from the immutable Fragment Kit pin. App-owned project/preview modules retain IIFEs and CommonJS/global exports. No production build step or runtime npm dependencies. Read `vendor/fragment-kit-v0.3.3/docs/contracts.md` for shared contracts.
 
-Pinned vendored libraries: Ace 1.44.0, marked 18.1.1, acorn 8.19.0, lz-string 1.5.0. Keep licenses alongside them and the Nayuki MIT notice in `src/qr.js`. Preserve `LICENSE-graphvizonline` and lineage credit.
+Pinned vendored libraries: Ace 1.44.0, marked 18.1.1, acorn 8.19.0, lz-string 1.5.0 (inside the kit). Keep licenses alongside them and the Nayuki MIT notice in the kit QR encoder. Preserve `LICENSE-graphvizonline` and lineage credit.
 
 Edit `examples/<id>/` and its `meta.json`, then run these in order:
 
 ```
 npm run examples
-npm run gallery       # real Chromium screenshots; requires installed Playwright browser
+npm run gallery:pages # original real sandbox screenshots
+npm run gallery       # shared covers from those previews
 npm run offline       # after every shipped asset edit, including screenshots
 npm test
 npm run check
@@ -42,7 +43,7 @@ The service worker installs a content-versioned complete cache before activation
 
 ## HashBin configuration
 
-The `hashbin-client-id` meta value contains the registered public Pages Online client ID. This static browser app uses no client secret; never add one to the repository, browser assets, or preview. Redirect URI must be exactly `https://pages.hashbin.page/`. Saves use the pinned SDK's `publish()` (HashBin Publish draws price and approval); never reintroduce OAuth tokens on this shared origin. Upgrade the SDK URL and its published SRI hash together in `src/hashbin.js`; do not replace the integrity-checked module script with a plain import. `publish()` must run synchronously in the click, after `init()`. Redirect saves return as `#hashbin_publish=…` with the project in `clientState`. Links never silently replace stored work, and stale loads/saves cannot overwrite newer edits. Tests mock the SDK and spend no balance; explicitly clear the test store's client ID when exercising the missing-configuration error.
+The `hashbin-client-id` meta value contains the registered public Pages Online client ID. This static browser app uses no client secret; never add one to the repository, browser assets, or preview. Canonical and recovery return URLs come from fragment-kit.config.json and must match the public registration. Saves use the pinned SDK's `publish()` (HashBin Publish draws price and approval); never reintroduce OAuth tokens on this shared origin. Upgrade the SDK URL and its published SRI hash together in `src/fragment-config.mjs`; do not replace the integrity-checked module script with a plain import. `publish()` must run synchronously in the click, after `init()`. Redirect saves return as `#hashbin_publish=…` with the project in `clientState`. Links never silently replace stored work, and stale loads/saves cannot overwrite newer edits. Tests mock the SDK and spend no balance; explicitly clear the test store's client ID when exercising the missing-configuration error.
 
 ## URL identity and draft recovery
 
