@@ -1,7 +1,7 @@
 import {test} from '@playwright/test';import{createRequire}from'node:module';import{createHash}from'node:crypto';
 const manifest=createRequire(import.meta.url)('./offline-assets.js');test.setTimeout(120000);
 export default {
- ready:'body[data-ready="true"]',editor:'#ace-editor',status:'#notice',draftKey:'pagesonline:project',more:'#more-toggle',share:'#share',qr:'#qr',tabs:['Code','Preview'],example:'hello',cachePrefix:manifest.version,offlineAsset:'src/app.css',kitURL:'./vendor/fragment-kit-v0.3.3/src/index.js',
+ ready:'body[data-ready="true"]',editor:'#ace-editor',status:'#notice',draftKey:'pagesonline:project',more:'#more-toggle',share:'#share',qr:'#qr',tabs:['Code','Preview'],example:'hello',cachePrefix:manifest.version,offlineAsset:'src/app.css',kitURL:'./vendor/fragment-kit-v0.3.5/src/index.js',
  isWrittenURL:href=>{const url=new URL(href);return url.searchParams.has('doc')||url.searchParams.has('compressed')||url.hash.startsWith('#%7B');},getSource:page=>page.evaluate(()=>pagesApp.editor.getValue()),getDocument:page=>page.evaluate(()=>pagesApp.snapshot()),edit:(page,src)=>page.evaluate(src=>pagesApp.editor.setValue(src,-1),src),
  openMore:async page=>{if(!await page.locator('#fk-more-drawer').isVisible())await page.locator('#more-toggle').click();},
  configureHashBin:async(context,clientId)=>context.route('**/',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace(/name="hashbin-client-id" content="[^"]*"/,`name="hashbin-client-id" content="${clientId}"`)});}),

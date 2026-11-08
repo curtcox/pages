@@ -1,4 +1,4 @@
-import {LocalDrafts,RenderScheduler,HashBinPanel,createShell,mountMobileTabs,createShareDialog,createQrDialog} from '../vendor/fragment-kit-v0.3.3/src/index.js';
+import {LocalDrafts,RenderScheduler,HashBinPanel,compactShell,createShell,mountMobileTabs,createShareDialog,createQrDialog} from '../vendor/fragment-kit-v0.3.5/src/index.js';
 import {config,type,urlState,HashBinDocuments,HashBinStore,ShareLinks,LZString,fromDocument} from './fragment-config.mjs';
 Object.assign(globalThis,{HashBinDocuments,LZString});
 (async () => {
@@ -8,6 +8,7 @@ const safeStore = name => { try { const value = window[name]; value.getItem('pag
 const local = safeStore('localStorage'), session = safeStore('sessionStorage');
 const oldHeader=document.querySelector('#editor-shell>.toolbar'),brand=oldHeader.querySelector('.brand'),actions=oldHeader.querySelector('.toolbar-actions'),menu=oldHeader.querySelector('.more-menu');
 const shell=createShell({config,container:$('editor-shell')});shell.header.querySelector('.fk-brand').replaceChildren(...brand.childNodes);shell.header.querySelector('.fk-brand').href=new URL('./',location.href).href;shell.status.remove();shell.toolbar.append(actions);shell.header.querySelector('.fk-more').id='more-toggle';
+compactShell({header:shell.header,status:document.querySelector('#app-footer')});
 $('more').remove();menu.id='more';shell.drawer.body.prepend(menu);oldHeader.remove();
 for(const id of ['hashbin-load','hashbin-cid','hashbin-status','share-dialog','qr-dialog','share-mobile','qr-mobile'])$(id).remove();
 menu.querySelector('.inline-controls').remove();menu.querySelector('label[for=hashbin-cid]').remove();
@@ -32,7 +33,7 @@ function shareLink(options = {}) {
 }
 function updateURL(){try{urlState.cancel();history.replaceState(null,'',urlState.build(snapshot(),{run:auto,view,page:preview.page||project.entry}).href);lastNavigation=location.href;}catch(error){notice(error.message);}}
 function setAuto(value) { auto = value; $('auto-refresh').checked = value; $('auto-mobile').checked = value; if (!value) scheduler.cancel(); }
-function setPanel(panel){tabs?.select(['code','preview','console'].indexOf(panel));requestAnimationFrame(()=>editor?.resize());}
+function setPanel(panel){if(tabs?.getView()!=='split')tabs?.select(['code','preview','console'].indexOf(panel));requestAnimationFrame(()=>editor?.resize());}
 function changed() {
   if (changing) return;
   const text = editor ? editor.getValue() : fallback.value;
@@ -118,14 +119,14 @@ for (const button of document.querySelectorAll('[data-width]')) button.onclick =
   for (const item of document.querySelectorAll('[data-width]')) item.setAttribute('aria-pressed',String(item === button));
 };
 document.querySelector('.mobile-tabs').remove();
-const mobile=matchMedia('(max-width:767px)');const moveConsole=()=>{(mobile.matches?$('workspace'):$('preview-pane')).append($('console-pane'));editor?.resize();};moveConsole();mobile.addEventListener('change',moveConsole);
-const tabBar=document.createElement('div');$('editor-shell').append(tabBar);
-tabs=mountMobileTabs({container:tabBar,panels:[{label:'Code',panel:$('code-pane')},{label:'Preview',panel:$('preview-pane')},{label:'Console',panel:$('console-pane')}],onChange:index=>{document.body.dataset.panel=['code','preview','console'][index];requestAnimationFrame(()=>editor?.resize());}});
-const consoleBadge=document.createElement('span');consoleBadge.id='mobile-console-count';consoleBadge.textContent='0';consoleBadge.setAttribute('aria-hidden','true');document.querySelectorAll('.fk-tabs button')[2].append(consoleBadge);consoleView.mobileBadge=consoleBadge;tabs.select(1);
+const mobile=matchMedia('(max-width:767px)');let activePanel=-1;const moveConsole=()=>{(mobile.matches||activePanel!==-1?$('workspace'):$('preview-pane')).append($('console-pane'));editor?.resize();};moveConsole();mobile.addEventListener('change',moveConsole);
+const tabBar=shell.toolbar;
+tabs=mountMobileTabs({desktop:true,container:tabBar,panels:[{label:'Code',panel:$('code-pane')},{label:'Preview',panel:$('preview-pane')},{label:'Console',panel:$('console-pane')}],onChange:index=>{activePanel=index;moveConsole();document.body.classList.remove('editor-hidden');$('hide-editor').textContent=index===-1||index===0?'Hide editor':'Show editor';document.body.dataset.panel=index===-1?'split':['code','preview','console'][index];requestAnimationFrame(()=>editor?.resize());}});
+const consoleBadge=document.createElement('span');consoleBadge.id='mobile-console-count';consoleBadge.textContent='0';consoleBadge.setAttribute('aria-hidden','true');document.querySelectorAll('.fk-tabs button')[2].append(consoleBadge);consoleView.mobileBadge=consoleBadge;if(mobile.matches)tabs.select(1);
 
 
 $('toggle-console').onclick = ()=>{ document.body.classList.toggle('console-collapsed'); $('toggle-console').setAttribute('aria-expanded',String(!document.body.classList.contains('console-collapsed'))); };
-$('hide-editor').onclick = ()=>{ document.body.classList.toggle('editor-hidden'); $('hide-editor').textContent = document.body.classList.contains('editor-hidden') ? 'Show editor' : 'Hide editor'; editor?.resize(); closeMore(); };
+$('hide-editor').onclick = ()=>{tabs.select(tabs.getView()==='split'||tabs.getView()===0?1:'split');closeMore();};
 $('new-project').onchange = event=>{
   const kind = event.target.value; event.target.value = ''; if (!kind) return;
   if (confirm('Start a new project? Download your current work first if you want to keep it.')) { setProject(Project.starter(kind)); closeMore(); }
