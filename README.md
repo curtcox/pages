@@ -91,3 +91,10 @@ Program URLs always open the linked document, regardless of browser history or l
 ## Fragment Kit migration
 
 Shared tools now use the published v0.3.3 pin: [guide](docs/index.md), [migration notes](docs/fragment-kit-migration.md). Pages retains its project validator, bundler, Markdown, loop guards, console, trusted preview host and opaque user frame. Publish keeps SRI script loading. Its old-client transactions and page/view/run choices remain readable; new transaction keys are prefixed. The original screenshot producer is `gallery:pages`; `gallery` renders shared covers. The native project ZIP/export/import code remains app-owned.
+
+## Compact interface
+
+This app uses released Fragment Kit v0.3.5 for compact controls, readable dialogs,
+and individual-pane or split workspace views. On phones, primary feedback stays
+visible while status details are available in More.
+Current deployment evidence is recorded in the [shared rollout status](https://github.com/curtcox/Tools-for-pages-with-state-in-URL-fragments/blob/main/todo/rollout-status.md).

@@ -1,4 +1,4 @@
-const {test}=require('node:test'),assert=require('node:assert/strict'),Scheduler=require('../vendor/fragment-kit-v0.3.3/src/index.js').RenderScheduler;
+const {test}=require('node:test'),assert=require('node:assert/strict'),Scheduler=require('../vendor/fragment-kit-v0.3.5/src/index.js').RenderScheduler;
 test('scheduled edits coalesce and stale callbacks cannot render after a new version or manual Run',()=>{
  const callbacks=new Map();let id=0,renders=0;const timers={setTimeout:fn=>{callbacks.set(++id,fn);return id;},clearTimeout:key=>callbacks.delete(key)};
  const scheduler=new Scheduler({detect:()=>{},render:()=>renders++,timers,renderDelay:500});

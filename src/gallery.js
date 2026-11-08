@@ -1,4 +1,4 @@
-import {mountGallery} from '../vendor/fragment-kit-v0.3.3/src/index.js';
+import {mountGallery} from '../vendor/fragment-kit-v0.3.5/src/index.js';
 import {urlState} from './fragment-config.mjs';
 const container=document.getElementById('gallery-cards'),samples=Examples.catalog;
 mountGallery({container,urlState:{build:doc=>urlState.build(doc,{url:new URL('./',location.href).href,view:false})},catalog:samples.map(sample=>({id:sample.id,title:sample.title,tags:sample.tags,description:sample.description,document:{pages:sample.project},cover:'gallery/covers/'+sample.id+'.png'}))});

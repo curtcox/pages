@@ -6,5 +6,5 @@ await walk('');
 for (const script of ['build-examples','render-page-previews','render-gallery','render-docs','update-offline']) process.stdout.write(execFileSync(process.execPath,[new URL('scripts/'+script+'.mjs',root).pathname,'--check']));
 console.log('All scripts parse. Generated files are current.');
 
-execFileSync(process.execPath,['vendor/fragment-kit-v0.3.3/tools/check.mjs'],{stdio:'inherit'});
-execFileSync(process.execPath,['vendor/fragment-kit-v0.3.3/tools/vendor-sync.mjs','--check','--target','.'],{stdio:'inherit'});
+execFileSync(process.execPath,['vendor/fragment-kit-v0.3.5/tools/check.mjs'],{stdio:'inherit'});
+execFileSync(process.execPath,['vendor/fragment-kit-v0.3.5/tools/vendor-sync.mjs','--check','--target','.'],{stdio:'inherit'});

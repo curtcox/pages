@@ -25,3 +25,9 @@ body{height:var(--fk-viewport-height,100dvh)}.fk-header{background:var(--paper);
 @media(max-width:767px){#file-tabs button,.console-location,#view-strip a,#view-run,#app-footer button,dialog button{min-height:44px}}
 
 #more-toggle{min-height:44px}
+
+#workspace[data-fk-view="single"]>.fk-view-panel:not([hidden]){display:flex!important;width:100%!important;height:100%;flex:1;min-width:0}.fk-compact .fk-toolbar .toolbar-actions{width:auto;flex-wrap:wrap}.fk-compact #app-footer{font-size:11px}.fk-compact #app-footer>a,.fk-compact #app-footer>span:last-child{display:none}
+
+.fk-compact>.fk-toolbar>.toolbar-actions{min-width:0;max-width:100%;flex-wrap:wrap}.fk-compact>.fk-toolbar{flex-wrap:wrap}
+
+#workspace>.fk-view-panel{overflow:hidden}#console-pane .console-heading{min-width:0;flex-wrap:wrap}#console-form{min-width:0}#console-expression{min-width:0}
