@@ -33,6 +33,7 @@ class Preview {
   }
   navigate(page,hash = '') { if (this.page) this.history.push(this.page); this.render(page,hash); }
   back() { const page = this.history.pop(); if (page) this.render(page); }
+  stop() { clearTimeout(this.hostTimer); this.pending=null; this.token=crypto.randomUUID(); this.iframe.src='about:blank'; }
   reset() { this.history = []; this.page = null; }
   eval(expression) { this.iframe.contentWindow.postMessage({channel:'pages-online',token:this.token,type:'eval',expression},this.activeURL.origin); }
   message(event) {

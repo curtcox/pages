@@ -4,17 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
   <!-- User scripts inherit preview.html's policy, separately from this editor. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://hashbin.org https://256t.us https://api.allorigins.win; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://hashbin.org https://256t.us https://api.allorigins.win https://api.openai.com https://openrouter.ai https://api.anthropic.com https://generativelanguage.googleapis.com; worker-src 'self' blob:; frame-src 'self' https://ai.hashbin.page; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="pages-preview-url" content="./preview.html">
-  <meta name="fragment-kit" content="pages-fragment-kit-v0.3.5"><meta name="theme-color" content="#203f3b">
+  <meta name="fragment-kit" content="pages-fragment-kit-v0.4.3"><meta name="theme-color" content="#203f3b">
   <meta name="description" content="A small workspace for the web. Build HTML, CSS, JavaScript and Markdown pages in your browser.">
   <meta name="hashbin-client-id" content="app_3f65398b-b2d1-4f20-a9de-3458894ce31d">
   <title>Pages Online — a small workspace for the web</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
-  <link rel="stylesheet" href="vendor/fragment-kit-v0.3.5/src/ui/kit.css"><link rel="stylesheet" href="src/app.css?v=1">
+  <link rel="stylesheet" href="vendor/fragment-kit-v0.4.3/src/ui/kit.css"><link rel="stylesheet" href="src/app.css?v=1">
   <script src="src/view-mode.js?v=1"></script>
+<link rel="stylesheet" href="vendor/fragment-kit-v0.4.3/src/ai/ui/ai.css">
 </head>
 <body data-panel="preview">
   <div id="view-strip">Made with <a href="./">Pages Online</a><span> · user-created page · </span><a id="edit-link" href="./">Edit</a><button id="view-run" hidden>Run page</button></div>
@@ -70,7 +71,7 @@
   <dialog id="share-dialog"><header><h2>Share your project</h2><button id="share-close" aria-label="Close">×</button></header><label>Open link in<select id="share-mode"><option value="editor">Editor</option><option value="view">Page only</option></select></label><label class="check-label"><input id="share-no-run" type="checkbox"> Don't run on open</label><label>Share link<textarea id="share-url" rows="3" readonly></textarea></label><p id="share-status" class="fine" role="status"></p><div class="dialog-actions"><button id="share-copy" class="primary">Copy</button><button id="share-shorten">Shorten link</button><button id="hashbin-confirm" disabled>Save to HashBin</button></div><p class="fine">Links contain your project. Save to HashBin for a shorter saved link.</p><p id="hashbin-message" role="status"></p></dialog>
   <dialog id="qr-dialog"><header><h2>A page to pass along</h2><button id="qr-close" aria-label="Close">×</button></header><label>QR destination<select id="qr-mode"><option value="editor">Opens the editor</option><option value="view">Opens the page only</option></select></label><div id="qr-code"></div><p id="qr-warning" class="fine" role="status"></p><div class="dialog-actions"><button id="qr-svg">Download SVG</button><button id="qr-png">Download PNG</button></div></dialog>
   <script src="vendor/marked.min.js?v=1"></script><script src="vendor/acorn.min.js?v=1"></script>
-  <script src="src/project.js?v=1"></script><script src="src/markdown.js?v=1"></script><script src="src/loop-guard.js?v=1"></script><script src="src/preview-runtime.js?v=1"></script><script src="src/bundler.js?v=1"></script><script src="src/preview.js?v=1"></script><script src="src/console-view.js?v=1"></script><script src="src/zip.js?v=1"></script><script src="src/export.js?v=1"></script><script src="src/examples.js?v=1"></script><script type="module" src="src/app.js?v=1"></script><script type="module" src="src/offline-ui.mjs"></script>
+  <script src="src/project.js?v=1"></script><script src="src/markdown.js?v=1"></script><script src="src/loop-guard.js?v=1"></script><script src="src/preview-runtime.js?v=1"></script><script src="src/bundler.js?v=1"></script><script src="src/preview.js?v=1"></script><script src="src/console-view.js?v=1"></script><script src="src/zip.js?v=1"></script><script src="src/export.js?v=1"></script><script src="src/examples.js?v=1"></script><script type="module" src="src/app.js?v=2"></script><script type="module" src="src/offline-ui.mjs"></script>
 <script type="module" src="src/domain-migration.js"></script>
 </body>
 </html>

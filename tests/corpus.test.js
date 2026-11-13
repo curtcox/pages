@@ -7,7 +7,7 @@ test('large projects use the existing plain envelope fragment instead of a large
 test('legacy Publish transactions are scoped to this client and new writes remain prefixed',()=>{const values=new Map(),storage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)},tx=publishTransactions(storage,'pages-client');values.set('hashbin:publish:pages-client:old','owned');values.set('hashbin:publish:other:old','foreign');assert.equal(tx.getItem('hashbin:publish:pages-client:old'),'owned');assert.equal(tx.getItem('hashbin:publish:other:old'),null);tx.setItem('hashbin:publish:pages-client:new','new');assert.equal(values.get('pagesonline:hashbin:publish:pages-client:new'),'new');tx.removeItem('hashbin:publish:pages-client:old');assert.equal(values.has('hashbin:publish:pages-client:old'),false);assert.equal(values.get('hashbin:publish:other:old'),'foreign');});
 
 test('literal JSON source round-trips and legacy compressed envelope aliases still load',()=>{
- const{compress}=require('../vendor/fragment-kit-v0.3.5/src/index.js');
+ const{compress}=require('../vendor/fragment-kit-v0.4.3/src/index.js');
  for(const src of ['{"src":"literal text"}','{"format":"hashbin-diagram","version":1,"type":"python","src":"literal code"}']){const project=P.single(src);assert.deepEqual(urlState.parse(urlState.build(project).href).doc.pages,project);}
  const project=P.starter('site');assert.deepEqual(urlState.parse('https://pages.hashbin.page/?compressed='+compress(D.serialize(project))).doc.pages,project);
 });

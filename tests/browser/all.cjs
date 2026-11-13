@@ -17,7 +17,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
  async function step(name,work){current=name;await work();passed++;console.log('✓ '+engine+' · '+name);}
  try{
   browser=await ({chromium,firefox,webkit})[engine].launch();const context=await browser.newContext({viewport:{width:1280,height:850},acceptDownloads:true,serviceWorkers:'block'});page=await context.newPage();page.setDefaultTimeout(8000);
-  await context.route(base+'vendor/fragment-kit-v0.3.5/vendor/hashbin-sdk-v0.4.0.mjs',route=>route.abort());
+  await context.route(base+'vendor/fragment-kit-v0.4.3/vendor/hashbin-sdk-v0.4.0.mjs',route=>route.abort());
   const frame=()=>page.frameLocator('#preview').frameLocator('#preview-content'),logs=()=>page.locator('#console-list').textContent();
   // Links that would replace unsaved work ask first; tests accept unless they say otherwise.
   const open=async(query='',answer=true)=>{const reply=d=>answer?d.accept():d.dismiss();page.on('dialog',reply);try{await page.goto(base+query);await page.waitForFunction(()=>window.pagesApp&&document.querySelector('#file-tabs button'));}finally{page.off('dialog',reply);}};
@@ -111,7 +111,7 @@ async function until(work,label,timeout=8000){const end=Date.now()+timeout;let l
   await step('HashBin SRI, popup/redirect sharing choices, cancellation, stale approval and CID loads',async()=>{
    await page.evaluate(()=>pagesApp.store.clientId='');await saveOpen(page);await until(async()=>/registered client ID/.test(await page.locator('#hashbin-message').textContent()),'client setup notice');await page.locator('#hashbin-dialog .fk-close').click();
    await context.route(base+'**',async route=>{const url=new URL(route.request().url());if(url.pathname===new URL(base).pathname||url.pathname.endsWith('/index.html'))await route.fulfill({body:(await fs.readFile(path.join(root,'index.html'),'utf8')).replace(/(<meta name="hashbin-client-id" content=")[^"]*(")/,'$1fixture-client$2'),contentType:'text/html'});else await route.continue();});
-   const sdkURL=base+'vendor/fragment-kit-v0.3.5/vendor/hashbin-sdk-v0.4.0.mjs';await context.unroute(sdkURL);await context.route(sdkURL,route=>route.fulfill({body:'globalThis.unverifiedSDK=true;',contentType:'text/javascript'}));
+   const sdkURL=base+'vendor/fragment-kit-v0.4.3/vendor/hashbin-sdk-v0.4.0.mjs';await context.unroute(sdkURL);await context.route(sdkURL,route=>route.fulfill({body:'globalThis.unverifiedSDK=true;',contentType:'text/javascript'}));
    await open();await saveOpen(page);await until(async()=>/verified HashBin SDK could not load/.test(await page.locator('#hashbin-message').textContent()),'SRI rejects substitution');assert.equal(await page.evaluate(()=>globalThis.unverifiedSDK),undefined);assert.ok(await page.locator('#hashbin-confirm').isDisabled());await page.locator('#hashbin-dialog .fk-close').click();
    await context.unroute(sdkURL);const sdkFixture=await fs.readFile(path.join(__dirname,'fixtures/hashbin-sdk.mjs')),fixtureIntegrity='sha384-'+require('node:crypto').createHash('sha384').update(sdkFixture).digest('base64');
    await context.route(base+'src/fragment-config.mjs',async route=>route.fulfill({body:(await fs.readFile(path.join(root,'src/fragment-config.mjs'),'utf8')).replace(/sha384-[A-Za-z0-9+/=]+/,fixtureIntegrity),contentType:'text/javascript'}));await context.route(sdkURL,route=>route.fulfill({body:sdkFixture,contentType:'text/javascript'}));

@@ -22,7 +22,7 @@ A buildless, static GitHub Pages editor. Read `todo/master_plan.md` for the desi
 
 ## Browser assets and generated files
 
-Shared UI and document adapters use native ES modules from the immutable Fragment Kit pin. App-owned project/preview modules retain IIFEs and CommonJS/global exports. No production build step or runtime npm dependencies. Read `vendor/fragment-kit-v0.3.5/docs/contracts.md` for shared contracts.
+Shared UI and document adapters use native ES modules from the immutable Fragment Kit pin. App-owned project/preview modules retain IIFEs and CommonJS/global exports. No production build step or runtime npm dependencies. Read `vendor/fragment-kit-v0.4.3/docs/contracts.md` for shared contracts.
 
 Pinned vendored libraries: Ace 1.44.0, marked 18.1.1, acorn 8.19.0, lz-string 1.5.0 (inside the kit). Keep licenses alongside them and the Nayuki MIT notice in the kit QR encoder. Preserve `LICENSE-graphvizonline` and lineage credit.
 
