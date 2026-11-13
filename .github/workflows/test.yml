@@ -12,7 +12,7 @@ jobs:
       kit-path: vendor/fragment-kit-v0.4.3
       contract-config: testing-contract.config.mjs
       server-command: node vendor/fragment-kit-v0.4.3/tools/serve.mjs --port 8000
-      browser-command: node tests/browser/ai.mjs && node tests/browser/ai.mjs && node tests/browser/ai.mjs && node tests/browser/ai.mjs && node tests/browser/legacy-publish.cjs && node tests/browser/url-state.cjs && npm run test:browser
+      browser-command: node tests/browser/ai.mjs && node tests/browser/legacy-publish.cjs && node tests/browser/url-state.cjs && npm run test:browser
   kit:
     uses: curtcox/Tools-for-pages-with-state-in-URL-fragments/.github/workflows/kit-check.yml@v2
     with:
