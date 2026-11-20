@@ -1,4 +1,4 @@
-import * as kit from '../vendor/fragment-kit-v0.4.3/src/index.js';
+import * as kit from '../vendor/fragment-kit-v0.5.0/src/index.js';
 import * as ProjectModule from './project.js';
 import appConfig from '../fragment-kit.config.json' with {type:'json'};
 const Project=ProjectModule.default??globalThis.Project;
@@ -23,7 +23,7 @@ const core=kit.createUrlState({config,type,legacyWriter,legacyReaders:[(url,{doc
 function options(value,opts={}){const pages=fromDocument(value),url=new URL(opts.url??globalThis.location?.href??config.canonicalOrigin),page=opts.page??url.searchParams.get('page');if(page&&page!==pages.entry&&pages.files.some(file=>file.name===page&&Project.PAGE.test(page)))url.searchParams.set('page',page);else url.searchParams.delete('page');return {...opts,url:url.href,view:opts.view===true?'page':opts.view||undefined};}
 export const urlState={...core,parse(href){const intent=core.parse(href),url=new URL(href);return {...intent,view:url.searchParams.has('view'),page:url.searchParams.get('page')};},build:(value,opts)=>core.build(value,options(value,opts)),write:(value,opts)=>core.write(value,options(value,opts))};
 export const HashBinDocuments={...core.documents,MAX_BYTES:config.maxBytes,serialize:serializeLegacy,parse:payload=>fromDocument(core.documents.parse(payload)),link:urlState.link,...Object.fromEntries(['bytes','encode64','decode64','isCID','cidLength','verify'].map(key=>[key,kit[key]])),cid:value=>kit.cid(value,config.allowedHosts)};
-export const SDK_URL=new URL('../vendor/fragment-kit-v0.4.3/vendor/hashbin-sdk-v0.4.0.mjs',import.meta.url).href;
+export const SDK_URL=new URL('../vendor/fragment-kit-v0.5.0/vendor/hashbin-sdk-v0.4.0.mjs',import.meta.url).href;
 export const SDK_INTEGRITY='sha384-zzmaXw5svWRp0YF//G5ytyeqEowixccM/hHVDth46FnGrIlPS7fPki5vbhv+bWCr';
 // Pages' existing SRI-script contract stays in force, including rejection tests.
 export function loadPublishSDK(){return new Promise((resolve,reject)=>{const script=document.createElement('script');script.type='module';script.src=SDK_URL;script.integrity=SDK_INTEGRITY;script.crossOrigin='anonymous';script.onload=()=>{script.remove();resolve(globalThis.hashbin);};script.onerror=()=>{script.remove();reject(Error('The verified HashBin SDK could not load. Check your connection and try again.'));};document.head.append(script);});}
@@ -40,7 +40,9 @@ export class HashBinStore extends kit.HashBinStore{
   this.shareState=state;this.shareOptions=options.shareOptions;this.documents={...this.documents,serialize:serializeLegacy};
  }
  load=async value=>fromDocument(await super.load(value));
- publish(payload,snapshot,share=this.shareOptions?.()){this.shareState.pending=sharing(share);return super.publish(payload,snapshot);}
+ publish(payload,snapshot,optionsOrShare){ // Detached kinds carry publish options, not share preferences.
+  if(optionsOrShare?.kind&&optionsOrShare.kind!=='document'){this.shareState.pending=undefined;return super.publish(payload,snapshot,optionsOrShare);}
+  this.shareState.pending=sharing(optionsOrShare??this.shareOptions?.());return super.publish(payload,snapshot);}
  async published(hash){try{
   const result=await super.published(hash),share=this.shareState.returned.get(hash);
   // Pages keeps the current project after any failed CID verification, even if
@@ -54,7 +56,7 @@ export const ShareLinks={build:({url,project,run=true,view=false,page,cid})=>{
  const link=core.scrub(options(project,{url,page}).url);if(run===false)link.searchParams.set('run','0');if(view)link.searchParams.set('view','');const href=core.link(link.href,cid);return {href,long:href,fallback:href,plain:href,qrCandidate:href};
 },parse:href=>{const intent=urlState.parse(href);return {...intent,kind:intent.kind==='none'?'empty':intent.kind,...(intent.doc?{project:fromDocument(intent.doc)}:{})};}};
 export const LZString={compressToEncodedURIComponent:kit.compress,decompressFromEncodedURIComponent:kit.decompress};
-export {ShareClient} from '../vendor/fragment-kit-v0.4.3/src/index.js';
+export {ShareClient} from '../vendor/fragment-kit-v0.5.0/src/index.js';
 
 // AI is a separate opt-in entry point; document loading never creates a connection.
 type.ai={"describe":"Return the complete {src,pages} JSON object. pages is {files:[{name,text}],entry,active}. Preserve unrelated files and entry/active. src mirrors the entry file. Validated projects wait for explicit Run in the existing opaque preview.","paths":["/src"],"output":"full"};

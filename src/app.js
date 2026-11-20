@@ -1,6 +1,6 @@
 import {mountClientAi,aiCallback} from './ai-client.js';
 if(aiCallback()) await new Promise(()=>{});
-import {LocalDrafts,RenderScheduler,HashBinPanel,compactShell,createShell,mountMobileTabs,createShareDialog,createQrDialog} from '../vendor/fragment-kit-v0.4.3/src/index.js';
+import {LocalDrafts,RenderScheduler,HashBinPanel,compactShell,createShell,mountMobileTabs,createShareDialog,createQrDialog,openLibrary,createLibraryPanel} from '../vendor/fragment-kit-v0.5.0/src/index.js';
 import {config,type,urlState,HashBinDocuments,HashBinStore,ShareLinks,LZString,fromDocument} from './fragment-config.mjs';
 Object.assign(globalThis,{HashBinDocuments,LZString});
 (async () => {
@@ -16,7 +16,7 @@ for(const id of ['hashbin-load','hashbin-cid','hashbin-status','share-dialog','q
 menu.querySelector('.inline-controls').remove();menu.querySelector('label[for=hashbin-cid]').remove();
 for(const a of menu.querySelectorAll('.docs-links a'))if(/gallery|guide|fork/i.test(a.textContent))a.remove();
 $('share').classList.remove('desktop-action');$('qr').classList.remove('desktop-action');
-const closeMore=()=>shell.drawer.dialog.close();let navigationRevision=0,qrSave=false,tabs,lastNavigation=location.href;
+const closeMore=()=>shell.drawer.dialog.close();let navigationRevision=0,qrSave=false,tabs,lastNavigation=location.href,libraryPanel=null;
 
 const key = 'pagesonline:project', renderingKey = 'pagesonline:rendering';
 const drafts = new LocalDrafts({ storage: local, key, parse: text => Project.validate(JSON.parse(text)) });
@@ -42,7 +42,7 @@ function changed() {
   const text = editor ? editor.getValue() : fallback.value;
   const next = { ...project, files:project.files.map(f=>f.name === project.active ? {...f,text} : f) };
   try { project = Project.validate(next); } catch (error) { scheduler.cancel(); notice(error.message); return; }
-  navigationRevision++;urlState.cancel();panel?.cancelLoad(); annotations.delete(project.active); applyAnnotations(); persist(true);
+  navigationRevision++;urlState.cancel();panel?.cancelLoad();libraryPanel?.cancelLoad();libraryPanel?.changed(); annotations.delete(project.active); applyAnnotations(); persist(true);
   try{lastNavigation=urlState.write(snapshot(),{run:auto&&!aiHold,view,page:preview.page||project.entry});notice('');}catch(error){notice(error.message);}
   if (auto&&!aiHold) scheduler.schedule({detect:false});
 }
@@ -100,7 +100,7 @@ function setProject(value,{cid=null,render=auto,reset=true,update=true,localEdit
   if(!fromAi){aiUI?.cancel();aiHold=false;}
   if(localEdit)navigationRevision++;urlState.cancel();value=fromDocument(value);
   if (!localEdit) drafts.opened();
-  project = Project.validate(value);if(cancelLoad)panel?.cancelLoad();scheduler.cancel();
+  project = Project.validate(value);if(cancelLoad){panel?.cancelLoad();libraryPanel?.cancelLoad();}scheduler.cancel();
   sessions.clear(); annotations.clear(); if (reset) preview.reset();
   if (cid) { savedCID = cid; savedFingerprint = fingerprint(); } else { savedCID = null; savedFingerprint = null; }
   if (editor || fallback) selectFile(project.active); else renderTabs();
@@ -110,11 +110,16 @@ function shareOptions(){return {view:shareMode.value==='view',run:$('share-run')
 const store=new HashBinStore({legacyStorage:local,shareOptions});
 const panelURLs={...urlState,link:(input,cid)=>ShareLinks.build({url:input,project:snapshot(),cid,...shareOptions()}).href};
 const panel=new HashBinPanel({store,urlState:panelURLs,container:menu,getSnapshot:snapshot,getFingerprint:fingerprint,
- onLoad(value,cid){setProject(value,{cid,render:false,localEdit:false,cancelLoad:false});const page=new URL(location.href).searchParams.get('page');if(project.files.some(file=>file.name===page&&Project.PAGE.test(page)))preview.page=page;updateURL();if(cid)history.replaceState(null,'',urlState.link(location.href,cid));closeMore();if(auto&&!aiHold)run();else $('view-run').hidden=!view;},
+ async onLoad(value,cid){setProject(value,{cid,render:false,localEdit:false,cancelLoad:false});const page=new URL(location.href).searchParams.get('page');if(project.files.some(file=>file.name===page&&Project.PAGE.test(page)))preview.page=page;updateURL();if(cid)history.replaceState(null,'',urlState.link(location.href,cid));closeMore();if(auto&&!aiHold)run();else $('view-run').hidden=!view;
+  await libraryPanel?.opened(value,cid?{kind:'cid',source:cid}:{record:false});},
+ onDetached:result=>{void libraryPanel?.published(result);},
  onSaved(cid,fp,link){urlState.cancel();savedCID=cid;savedFingerprint=fp;history.replaceState(null,'',urlState.link(location.href,cid));if(qrSave){qrSave=false;panel.dialog.close();qr.open(link);}}
 });
 panel.dialog.addEventListener('close',()=>{qrSave=false;});
-drafts.mount(menu,value=>{navigationRevision++;panel.cancelLoad();setProject(value,{render:false,localEdit:false});setPanel('code');notice('Saved work restored — press Run.');},value=>(value.files.find(file=>file.name===value.active)?.text||value.files[0].text)+'\n\n'+value.files.map(file=>file.name+'\n'+file.text).join('\n\n'));
+const library=view?null:await openLibrary({config,type}).catch(error=>{notice(error.message);return null;});
+if(library)libraryPanel=createLibraryPanel({library,store,urlState,getSnapshot:()=>type.normalize(snapshot()),getFingerprint:fingerprint,container:shell.toolbar,drafts,
+ onLoad:value=>{navigationRevision++;panel.cancelLoad();setProject(value,{render:false,localEdit:false,cancelLoad:false});setPanel('code');notice('Library revision loaded — press Run.');closeMore();}});
+drafts.mount(menu,value=>{navigationRevision++;panel.cancelLoad();libraryPanel?.cancelLoad();setProject(value,{render:false,localEdit:false});setPanel('code');notice('Saved work restored — press Run.');void libraryPanel?.opened(value,{record:false});},value=>(value.files.find(file=>file.name===value.active)?.text||value.files[0].text)+'\n\n'+value.files.map(file=>file.name+'\n'+file.text).join('\n\n'));
 window.pagesApp={getProject:snapshot,snapshot:()=>type.normalize(snapshot()),setProject,preview,store,get editor(){return editor;},run,selectPanel:setPanel};
 $('run').onclick = run; $('reload').onclick = run; $('view-run').onclick = run;
 $('auto-refresh').onchange = event=>setAuto(event.target.checked); $('auto-mobile').onchange = event=>setAuto(event.target.checked); setAuto(auto);
@@ -174,13 +179,17 @@ if (!view) {
   } catch (_) { fallback = document.createElement('textarea'); fallback.className = 'fallback-editor'; fallback.setAttribute('aria-label','Source editor'); fallback.spellcheck = false; fallback.oninput = changed; $('ace-editor').append(fallback); notice('The code editor could not load. You can keep editing in the text field.'); }
 }
 async function openURL(){
- const own=++navigationRevision;urlState.cancel();panel.cancelLoad();scheduler.cancel();
+ const own=++navigationRevision;urlState.cancel();panel.cancelLoad();libraryPanel?.cancelLoad();scheduler.cancel();
  try{
   const parsed=urlState.parse(location.href);setAuto(!crashed&&parsed.run!==false);notice(crashed?'The last preview may have frozen the page. Fix the code, then press Run.':'');let next,cid=null,returnedShare;
-  if(parsed.kind==='publish'){const result=await store.published(location.hash);if(own!==navigationRevision)return;if(result?.snapshot)next=fromDocument(result.snapshot);cid=result?.cid??null;returnedShare=result?.share;if(result?.error)notice(result.error);else if(result)$('hashbin-status').textContent='Saved to HashBin.';}
-  else if(parsed.kind==='source')next=fromDocument(parsed.doc);
-  else if(parsed.kind==='example'){const sample=Examples.catalog.find(sample=>sample.id===parsed.id);if(!sample)throw Error('Sample not found. Choose one from the gallery.');next=sample.project;}
-  else if(parsed.kind==='none')next=Project.starter();
+  if(parsed.kind==='publish'){const result=await store.published(location.hash);if(own!==navigationRevision)return;
+   if(result?.kind){ // Detached library/revision export: its CID is not the document's.
+    if(result.snapshot)next=fromDocument(result.snapshot);
+    if(result.error)notice(result.error);else{$('hashbin-status').textContent=result.kind==='library'?'Library exported to HashBin.':'Revision saved to HashBin.';void libraryPanel?.published(result);}
+   }else{if(result?.snapshot)next=fromDocument(result.snapshot);cid=result?.cid??null;returnedShare=result?.share;if(result?.error)notice(result.error);else if(result)$('hashbin-status').textContent='Saved to HashBin.';}}
+  else if(parsed.kind==='source'){next=fromDocument(parsed.doc);void libraryPanel?.opened(parsed.doc,{kind:'link'});}
+  else if(parsed.kind==='example'){const sample=Examples.catalog.find(sample=>sample.id===parsed.id);if(!sample)throw Error('Sample not found. Choose one from the gallery.');next=sample.project;void libraryPanel?.opened(sample.project,{record:false});}
+  else if(parsed.kind==='none'){next=Project.starter();void libraryPanel?.opened(next,{record:false});}
   if(next){setProject(next,{cid,render:false,update:false,localEdit:false,cancelLoad:false});const page=returnedShare?.page??parsed.page;if(project.files.some(file=>file.name===page&&Project.PAGE.test(page)))preview.page=page;}
   if(returnedShare){setAuto(!crashed&&returnedShare.run!==false);shareMode.value=returnedShare.view?'view':'editor';$('share-run').checked=returnedShare.run!==false;}
   if(parsed.kind==='cid'){await panel.load(parsed.cid);if(own!==navigationRevision)return;if(panel.status.textContent!=='Loaded from HashBin.')notice(panel.status.textContent);}
@@ -192,5 +201,5 @@ async function openURL(){
 store.retireLegacyTokens().catch(()=>{});
 const navigate=event=>{if(event.type==='hashchange'&&event.newURL!==location.href)return;if(location.href===lastNavigation)return;lastNavigation=location.href;if(new URL(location.href).searchParams.has('view')!==view){location.reload();return;}void openURL();};window.addEventListener('hashchange',navigate);window.addEventListener('popstate',navigate);
 await openURL();
-aiUI=await mountClientAi({config,type,urlState,getSnapshot:()=>type.normalize(snapshot()),getFingerprint:fingerprint,container:shell.drawer.body,toolbar:shell.toolbar,status:notice,onApply:doc=>{aiHold=true;preview.stop();setProject(doc,{render:false,reset:true,localEdit:true,fromAi:true});notice('Change accepted — press Run.');}});
+aiUI=await mountClientAi({config,type,urlState,getSnapshot:()=>type.normalize(snapshot()),getFingerprint:fingerprint,container:shell.drawer.body,toolbar:shell.toolbar,status:notice,onApply:doc=>{aiHold=true;preview.stop();setProject(doc,{render:false,reset:true,localEdit:true,fromAi:true});notice('Change accepted — press Run.');void libraryPanel?.opened(doc,{record:false});}});
 })();

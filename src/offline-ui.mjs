@@ -1,5 +1,5 @@
 import {aiCallback} from './ai-client.js';
-import { OfflineClient } from '../vendor/fragment-kit-v0.4.3/src/index.js';
+import { OfflineClient } from '../vendor/fragment-kit-v0.5.0/src/index.js';
 if(!aiCallback()){
 
 const status = document.getElementById('offline-status'), action = document.getElementById('offline-action');

@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "src/examples.js": "f0a7666e87282538b27d318a8f2a529d9362072e7d6563d77070b98cb268e91d",
-    "src/fragment-config.mjs": "fb894596cef9ed8843c0435a69f5f4e75bc625da471009dfdb9332f67002cbdf",
+    "src/fragment-config.mjs": "80ef94e7318f77bd72b955e110d91f2d5c7efe83bc72e8f248a0ac779c55c3e3",
     "fragment-kit.config.json": "221cbc2a82ec37765b5d4dd5183ca15706b6269d72012c8986e4977eeb53a169",
     "src/bundler.js": "eda7012b73d7cd4e4873830644d4aac04151d5dda22714f2803c3e4a498507cb",
     "src/markdown.js": "ec92ff4f13f269c497f8dd00aa82dbd0176db9de92b6f11a3c448a1809f1087a",

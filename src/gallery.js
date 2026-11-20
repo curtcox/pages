@@ -2,7 +2,7 @@ import {mountGalleryAi,aiCallback} from './ai-client.js';
 import {config,type} from './fragment-config.mjs';
 if(aiCallback()) await new Promise(()=>{});
 function mountGallery(options){const gallery=mountOriginalGallery(options);queueMicrotask(()=>void mountGalleryAi({config,type,...options}).catch(error=>{const p=document.createElement('p');p.setAttribute('role','status');p.textContent=error.message;options.container.before(p);}));return gallery;}
-import {mountGallery as mountOriginalGallery} from '../vendor/fragment-kit-v0.4.3/src/index.js';
+import {mountGallery as mountOriginalGallery} from '../vendor/fragment-kit-v0.5.0/src/index.js';
 import {urlState} from './fragment-config.mjs';
 const container=document.getElementById('gallery-cards'),samples=Examples.catalog;
 mountGallery({container,urlState:{build:doc=>urlState.build(doc,{url:new URL('./',location.href).href,view:false})},catalog:samples.map(sample=>({id:sample.id,title:sample.title,tags:sample.tags,description:sample.description,document:{pages:sample.project},cover:'gallery/covers/'+sample.id+'.png'}))});

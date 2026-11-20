@@ -20,8 +20,8 @@
     "vendor/LICENSE-marked",
     "vendor/LICENSE-acorn",
     "vendor/LICENSE-lz-string",
-    "vendor/fragment-kit-v0.4.3/src",
-    "vendor/fragment-kit-v0.4.3/vendor",
+    "vendor/fragment-kit-v0.5.0/src",
+    "vendor/fragment-kit-v0.5.0/vendor",
     "ai-suite.json",
     "ai-comparison.json"
   ]
